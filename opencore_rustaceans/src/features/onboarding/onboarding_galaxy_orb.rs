@@ -108,10 +108,6 @@ pub struct GalaxyOrbProgram {
 }
 
 impl GalaxyOrbProgram {
-    pub fn new(theme: OpenCoreTheme, started_at: Instant, now: Instant) -> Self {
-        Self::with_dynamics(theme, started_at, now, 1.0, 1.0)
-    }
-
     pub fn with_dynamics(
         theme: OpenCoreTheme,
         started_at: Instant,

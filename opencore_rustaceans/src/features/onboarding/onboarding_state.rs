@@ -130,7 +130,7 @@ impl OnboardingState {
     }
 
     pub fn subscription(&self) -> Subscription<OnboardingMessage> {
-        iced::time::every(Duration::from_millis(1)).map(OnboardingMessage::Tick)
+        iced::time::every(Duration::from_millis(16)).map(OnboardingMessage::Tick)
     }
 }
 
@@ -143,7 +143,7 @@ pub fn mark_completed(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::features::onboarding::onboarding_memory_persistence::InMemoryOnboardingPersistence;
+    use crate::features::onboarding::InMemoryOnboardingPersistence;
 
     #[test]
     fn enter_yields_completed() {

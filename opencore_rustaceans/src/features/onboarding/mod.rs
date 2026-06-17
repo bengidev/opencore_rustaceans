@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 //! Internal onboarding module — first-run onboarding flow.
 //!
 //! ## Design patterns (GoF)
@@ -36,24 +34,31 @@
 //!
 //! The module exposes only the composition-facing façade.
 
-pub mod onboarding_dynamics;
-pub mod onboarding_feature_card_dynamics;
-pub mod onboarding_feature_card_icon;
-pub mod onboarding_file_persistence;
-pub mod onboarding_galaxy_orb;
-pub mod onboarding_memory_persistence;
-pub mod onboarding_messages;
-pub mod onboarding_outcome;
-pub mod onboarding_persistence;
-pub mod onboarding_scene_backdrop;
-pub mod onboarding_state;
-pub mod onboarding_view;
+mod onboarding_dynamics;
+mod onboarding_feature_card_dynamics;
+mod onboarding_feature_card_icon;
+mod onboarding_file_persistence;
+mod onboarding_galaxy_orb;
+mod onboarding_memory_persistence;
+mod onboarding_messages;
+mod onboarding_outcome;
+mod onboarding_persistence;
+mod onboarding_scene_backdrop;
+mod onboarding_state;
+mod onboarding_view;
 
+pub use onboarding_file_persistence::FileOnboardingPersistence;
+pub use onboarding_memory_persistence::InMemoryOnboardingPersistence;
 pub use onboarding_messages::OnboardingMessage;
 pub use onboarding_outcome::OnboardingOutcome;
 pub use onboarding_persistence::OnboardingPersistence;
 pub use onboarding_state::{OnboardingState, mark_completed};
 pub use onboarding_view::view;
+
+/// Returns `true` when the onboarding window should be shown on launch.
+pub fn should_run(persistence: &dyn OnboardingPersistence) -> bool {
+    !persistence.is_completed()
+}
 
 use iced::{Element, Subscription, Task, Theme};
 use std::sync::Arc;
@@ -90,12 +95,10 @@ impl OnboardingApp {
     fn update(&mut self, message: OnboardingMessage) -> Task<OnboardingMessage> {
         let outcome = self.state.update(message);
         match outcome {
-            OnboardingOutcome::Completed => {
-                let _ = mark_completed(&self.state.persistence);
-                iced::exit()
-            }
-            OnboardingOutcome::Skipped => {
-                let _ = mark_completed(&self.state.persistence);
+            OnboardingOutcome::Completed | OnboardingOutcome::Skipped => {
+                if let Err(error) = mark_completed(&self.state.persistence) {
+                    eprintln!("failed to persist onboarding completion: {error}");
+                }
                 iced::exit()
             }
             _ => Task::none(),
@@ -119,5 +122,23 @@ impl OnboardingApp {
             crate::shared::design::ThemeMode::Dark => Theme::Dark,
             crate::shared::design::ThemeMode::Light => Theme::Light,
         }
+    }
+}
+
+#[cfg(test)]
+mod gate_tests {
+    use super::*;
+
+    #[test]
+    fn should_run_when_onboarding_incomplete() {
+        let persistence = InMemoryOnboardingPersistence::new();
+        assert!(should_run(&persistence));
+    }
+
+    #[test]
+    fn should_not_run_when_onboarding_complete() {
+        let persistence = InMemoryOnboardingPersistence::new();
+        persistence.mark_completed().unwrap();
+        assert!(!should_run(&persistence));
     }
 }
