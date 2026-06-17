@@ -9,13 +9,18 @@ mod shared;
 
 use std::sync::Arc;
 
-use features::onboarding::onboarding_file_persistence::FileOnboardingPersistence;
-use features::onboarding::onboarding_memory_persistence::InMemoryOnboardingPersistence;
-use features::onboarding::{OnboardingPersistence, run};
+use features::onboarding::{
+    FileOnboardingPersistence, InMemoryOnboardingPersistence, OnboardingPersistence, run,
+    should_run,
+};
 use shared::design::ThemeMode;
 
 fn main() -> iced::Result {
     let persistence = load_persistence();
+    if !should_run(persistence.as_ref()) {
+        eprintln!("Onboarding already completed; main workspace is not yet available.");
+        return Ok(());
+    }
     run(persistence, ThemeMode::Dark)
 }
 

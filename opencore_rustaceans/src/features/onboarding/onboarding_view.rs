@@ -18,15 +18,24 @@ use crate::shared::design::design_tokens::{
     ActionToken, BackgroundToken, BorderToken, ForegroundToken, RadiusToken, SpacingToken, TypeRole,
 };
 
+use super::onboarding_feature_card_icon::{FeatureCardIcon, FeatureKind};
 use super::onboarding_galaxy_orb::GalaxyOrbProgram;
 use super::onboarding_messages::OnboardingMessage;
 use super::onboarding_scene_backdrop::SceneBackdrop;
-use super::onboarding_state::OnboardingState;
+use super::onboarding_state::{FEATURE_COUNT, OnboardingState};
 
 const HERO_MAX_WIDTH: f32 = 600.0;
 const ORB_HEIGHT: f32 = 360.0;
+const FEATURE_CARD_SIZE: f32 = 88.0;
 const EDGE_INSET_H: f32 = 16.0;
 const EDGE_INSET_V: f32 = 20.0;
+
+const FEATURES: [(FeatureKind, &str); FEATURE_COUNT] = [
+    (FeatureKind::Chat, "Chat"),
+    (FeatureKind::Terminal, "Terminal"),
+    (FeatureKind::TextEditor, "Editor"),
+    (FeatureKind::Rust, "Rust"),
+];
 
 /// Render the onboarding view.
 pub fn view(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
@@ -48,6 +57,8 @@ pub fn view(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
                 Space::new().width(Length::Fill),
             ]
             .width(Length::Fill),
+            Space::new().height(Length::Fixed(SpacingToken::S4.value())),
+            feature_cards_row(state),
             Space::new().height(Length::Fill),
             action_row(state),
         ]
@@ -203,6 +214,66 @@ fn hero_block(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
     .into()
 }
 
+fn feature_cards_row(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
+    let mut cards = row![].spacing(SpacingToken::S3.value());
+    for (index, (kind, label)) in FEATURES.iter().enumerate() {
+        cards = cards.push(feature_card(state, index, *kind, label));
+    }
+
+    row![
+        Space::new().width(Length::Fill),
+        cards,
+        Space::new().width(Length::Fill),
+    ]
+    .align_y(Vertical::Center)
+    .width(Length::Fill)
+    .into()
+}
+
+fn feature_card<'a>(
+    state: &'a OnboardingState,
+    index: usize,
+    kind: FeatureKind,
+    label: &'a str,
+) -> Element<'a, OnboardingMessage> {
+    let theme = state.theme;
+    let glow = state.feature_glow[index];
+    let selected = state.selected_feature == index;
+
+    let icon = Canvas::new(FeatureCardIcon::new(
+        kind,
+        glow,
+        state.now,
+        state.started_at,
+        theme,
+    ))
+    .width(Length::Fixed(FEATURE_CARD_SIZE))
+    .height(Length::Fixed(FEATURE_CARD_SIZE));
+
+    let label_color = if selected {
+        theme.foreground(ForegroundToken::Primary)
+    } else {
+        theme.foreground(ForegroundToken::Muted)
+    };
+
+    let content = column![
+        icon,
+        Space::new().height(Length::Fixed(6.0)),
+        text(label).size(10).style(move |_t: &Theme| text::Style {
+            color: Some(label_color),
+        }),
+    ]
+    .align_x(Horizontal::Center)
+    .width(Length::Fixed(FEATURE_CARD_SIZE));
+
+    MouseArea::new(content)
+        .on_press(OnboardingMessage::FeatureSelected(index))
+        .on_enter(OnboardingMessage::FeatureHovered(Some(index)))
+        .on_exit(OnboardingMessage::FeatureHovered(None))
+        .interaction(iced::mouse::Interaction::Pointer)
+        .into()
+}
+
 fn action_row(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
     let theme = state.theme;
 
@@ -224,8 +295,17 @@ fn action_row(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
     .on_press(OnboardingMessage::EnterPressed)
     .style(move |_t: &Theme, status| primary_action_style(theme, status));
 
+    let skip = button(text("Skip").size(12).style(move |_t: &Theme| text::Style {
+        color: Some(theme.foreground(ForegroundToken::Muted)),
+    }))
+    .padding([14, 18])
+    .on_press(OnboardingMessage::Skipped)
+    .style(move |_t: &Theme, status| chip_style(theme, status));
+
     row![
         Space::new().width(Length::Fill),
+        skip,
+        Space::new().width(Length::Fixed(12.0)),
         primary,
         Space::new().width(Length::Fill),
     ]

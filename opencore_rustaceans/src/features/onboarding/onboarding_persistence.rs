@@ -17,6 +17,7 @@ pub trait OnboardingPersistence: Send + Sync {
 
     /// Clears the flag so onboarding reappears on next launch.
     /// Default is a no-op for out-of-tree implementations.
+    #[allow(dead_code)]
     fn reset(&self) -> Result<(), OnboardingPersistenceError> {
         Ok(())
     }

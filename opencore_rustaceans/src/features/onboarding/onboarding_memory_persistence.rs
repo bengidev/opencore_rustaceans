@@ -14,6 +14,7 @@ impl InMemoryOnboardingPersistence {
         Self::default()
     }
 
+    #[cfg(test)]
     pub fn already_completed() -> Self {
         Self {
             completed: Arc::new(Mutex::new(true)),
