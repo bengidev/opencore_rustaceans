@@ -40,8 +40,11 @@ mod welcome_view;
 pub use welcome_file_history::FileWelcomeHistory;
 pub use welcome_history::WelcomeHistory;
 pub use welcome_memory_history::InMemoryWelcomeHistory;
+#[allow(unused_imports)] // facade re-exports for embedders
 pub use welcome_messages::WelcomeMessage;
+#[allow(unused_imports)]
 pub use welcome_model::{WelcomeItemId, WelcomeScreen, build_screen, default_screen};
+#[allow(unused_imports)]
 pub use welcome_outcome::WelcomeOutcome;
 pub use welcome_state::WelcomeState;
 pub use welcome_view::view;
@@ -50,7 +53,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use iced::keyboard::{self, key, Modifiers};
+use iced::keyboard::{self, Modifiers, key};
 use iced::{Element, Subscription, Task, Theme};
 
 use welcome_actions::{clone_destination, create_empty_file, default_clone_parent, git_clone};
@@ -160,7 +163,10 @@ impl WelcomeApp {
                     .parent()
                     .map(std::path::Path::to_path_buf)
                     .unwrap_or(path);
-                self.state.update(Msg::ActionCompleted { path: parent, summary });
+                self.state.update(Msg::ActionCompleted {
+                    path: parent,
+                    summary,
+                });
                 self.persist_history();
             }
             Err(error) => {
@@ -201,8 +207,9 @@ impl WelcomeApp {
         Task::perform(
             async move {
                 let parent = default_clone_parent();
-                let destination = clone_destination(&parent, &url)
-                    .ok_or_else(|| String::from("could not derive a repository name from the URL"))?;
+                let destination = clone_destination(&parent, &url).ok_or_else(|| {
+                    String::from("could not derive a repository name from the URL")
+                })?;
                 git_clone(&url, &destination).map(|()| destination)
             },
             Msg::CloneCompleted,
@@ -223,9 +230,7 @@ impl WelcomeApp {
                 key: keyboard::Key::Named(key::Named::Escape),
                 ..
             } => Some(Msg::CommandPaletteDismiss),
-            keyboard::Event::KeyPressed { key, modifiers, .. } => {
-                shortcut_message(key, modifiers)
-            }
+            keyboard::Event::KeyPressed { key, modifiers, .. } => shortcut_message(key, modifiers),
             _ => None,
         })
     }
@@ -268,19 +273,13 @@ mod shortcut_tests {
 
     #[test]
     fn command_n_requests_new_file() {
-        let message = shortcut_message(
-            keyboard::Key::Character("n".into()),
-            Modifiers::COMMAND,
-        );
+        let message = shortcut_message(keyboard::Key::Character("n".into()), Modifiers::COMMAND);
         assert_eq!(message, Some(Msg::ItemPressed(WelcomeItemId::NewFile)));
     }
 
     #[test]
     fn command_o_requests_open_project() {
-        let message = shortcut_message(
-            keyboard::Key::Character("o".into()),
-            Modifiers::COMMAND,
-        );
+        let message = shortcut_message(keyboard::Key::Character("o".into()), Modifiers::COMMAND);
         assert_eq!(message, Some(Msg::ItemPressed(WelcomeItemId::OpenProject)));
     }
 }
