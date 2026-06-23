@@ -15,6 +15,7 @@ pub enum WelcomeMessage {
     CloneSubmit,
     CloneCancel,
     CloneCompleted(Result<PathBuf, String>),
+    #[allow(dead_code)] // reducer + tests; row press toggles via request_action
     CommandPaletteToggle,
     CommandPaletteQueryChanged(String),
     CommandPaletteSelect(usize),
