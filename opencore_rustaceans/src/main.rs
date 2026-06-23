@@ -1,8 +1,6 @@
 //! OpenCore Rustaceans — composition root.
 //!
-//! Boots the first-run onboarding window when the sentinel flag is absent.
-//! After completion the app exits; a future workspace shell will replace
-//! this handoff.
+//! Boots onboarding on first run, then the welcome home screen.
 
 mod features;
 mod shared;
@@ -10,18 +8,18 @@ mod shared;
 use std::sync::Arc;
 
 use features::onboarding::{
-    FileOnboardingPersistence, InMemoryOnboardingPersistence, OnboardingPersistence, run,
+    FileOnboardingPersistence, InMemoryOnboardingPersistence, OnboardingPersistence, run as run_onboarding,
     should_run,
 };
+use features::welcome::run as run_welcome;
 use shared::design::ThemeMode;
 
 fn main() -> iced::Result {
     let persistence = load_persistence();
-    if !should_run(persistence.as_ref()) {
-        eprintln!("Onboarding already completed; main workspace is not yet available.");
-        return Ok(());
+    if should_run(persistence.as_ref()) {
+        return run_onboarding(persistence, ThemeMode::Dark);
     }
-    run(persistence, ThemeMode::Dark)
+    run_welcome(ThemeMode::Dark)
 }
 
 fn load_persistence() -> Arc<dyn OnboardingPersistence> {

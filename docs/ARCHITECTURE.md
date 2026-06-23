@@ -32,6 +32,13 @@ src/
 │       ├── onboarding_feature_card_icon.rs
 │       ├── onboarding_galaxy_orb.rs       # Template Method canvas
 │       └── onboarding_scene_backdrop.rs
+│   └── welcome/
+│       ├── mod.rs                         # feature facade (GoF Facade)
+│       ├── welcome_model.rs               # Composite screen catalog
+│       ├── welcome_messages.rs            # Command messages
+│       ├── welcome_outcome.rs             # routing outcomes
+│       ├── welcome_state.rs               # State reducer
+│       └── welcome_view.rs                # Iced view
 └── shared/
     ├── mod.rs
     └── design/
@@ -44,7 +51,8 @@ src/
 
 | Pattern | Where | Role |
 |---------|-------|------|
-| **Facade** | `onboarding/mod.rs` | Hides prefixed siblings; exposes `run`, `view`, `OnboardingState` |
+| **Facade** | `onboarding/mod.rs`, `welcome/mod.rs` | Hides prefixed siblings; exposes `run`, `view`, state types |
+| **Composite** | `welcome_model.rs` | Screen → sections → items content tree |
 | **Strategy** | `OnboardingPersistence` | Swaps file vs in-memory backends |
 | **Command** | `OnboardingMessage` | Encodes user intents decoupled from widgets |
 | **State** | `OnboardingState::update` | Pure transitions + `OnboardingOutcome` routing |
