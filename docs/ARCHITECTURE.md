@@ -7,8 +7,8 @@ appears.
 ## Composition root
 
 `src/main.rs` is the application composition root. It chooses persistence
-implementations and launches the onboarding Iced runtime. No feature logic
-accumulates there.
+implementations and launches onboarding or the welcome home screen. No feature
+logic accumulates there.
 
 ## Internal modules
 
@@ -32,6 +32,19 @@ src/
 │       ├── onboarding_feature_card_icon.rs
 │       ├── onboarding_galaxy_orb.rs       # Template Method canvas
 │       └── onboarding_scene_backdrop.rs
+│   └── welcome/
+│       ├── mod.rs                         # feature facade (GoF Facade)
+│       ├── welcome_model.rs               # Composite screen catalog
+│       ├── welcome_messages.rs            # Command messages
+│       ├── welcome_outcome.rs             # routing outcomes
+│       ├── welcome_state.rs               # State reducer
+│       ├── welcome_view.rs                # Iced view + overlays
+│       ├── welcome_history.rs             # recent-project Strategy trait
+│       ├── welcome_file_history.rs        # filesystem Strategy
+│       ├── welcome_memory_history.rs      # in-memory Strategy
+│       ├── welcome_actions.rs             # file/git helpers
+│       ├── welcome_command_palette.rs     # palette filtering
+│       └── welcome_overlay.rs             # overlay enum
 └── shared/
     ├── mod.rs
     └── design/
@@ -44,8 +57,9 @@ src/
 
 | Pattern | Where | Role |
 |---------|-------|------|
-| **Facade** | `onboarding/mod.rs` | Hides prefixed siblings; exposes `run`, `view`, `OnboardingState` |
-| **Strategy** | `OnboardingPersistence` | Swaps file vs in-memory backends |
+| **Facade** | `onboarding/mod.rs`, `welcome/mod.rs` | Hides prefixed siblings; exposes `run`, `view`, state types |
+| **Composite** | `welcome_model.rs` | Screen → sections → items content tree |
+| **Strategy** | `OnboardingPersistence`, `WelcomeHistory` | Swaps file vs in-memory backends |
 | **Command** | `OnboardingMessage` | Encodes user intents decoupled from widgets |
 | **State** | `OnboardingState::update` | Pure transitions + `OnboardingOutcome` routing |
 | **Factory Method** | `OpenCoreTheme::from_mode`, persistence constructors | Pick concrete products |
@@ -53,16 +67,17 @@ src/
 
 ## TDD workflow
 
-Tests are colocated in each `onboarding_*.rs` module. Typical cycle:
+Tests are colocated in each feature module (`onboarding_*.rs`, `welcome_*.rs`). Typical cycle:
 
 1. **Red** — add a failing `#[test]` beside the reducer or strategy.
 2. **Green** — implement the smallest change in the sibling module.
-3. **Refactor** — keep the facade thin; run `cargo test onboarding`.
+3. **Refactor** — keep the facade thin; run `cargo test onboarding` or `cargo test welcome`.
 
 Run the suite:
 
 ```bash
 cargo test onboarding
+cargo test welcome
 ```
 
 ## Boundary rules
