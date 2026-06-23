@@ -203,9 +203,7 @@ fn command_palette_panel(
             None => Space::new().width(Length::Shrink).into(),
         };
 
-        let row_content = row![label, detail]
-        .spacing(8.0)
-        .width(Length::Fill);
+        let row_content = row![label, detail].spacing(8.0).width(Length::Fill);
 
         rows = rows.push(
             button(row_content)
@@ -344,13 +342,9 @@ fn header_block(
 }
 
 fn logo_mark(theme: OpenCoreTheme) -> Element<'static, WelcomeMessage> {
-    container(
-        text("◆")
-            .size(22.0)
-            .style(move |_t: &Theme| text::Style {
-                color: Some(theme.foreground(ForegroundToken::Accent)),
-            }),
-    )
+    container(text("◆").size(22.0).style(move |_t: &Theme| text::Style {
+        color: Some(theme.foreground(ForegroundToken::Accent)),
+    }))
     .width(Length::Fixed(LOGO_BOX))
     .height(Length::Fixed(LOGO_BOX))
     .align_x(Horizontal::Center)
@@ -416,16 +410,18 @@ fn section_header(title: &'static str, theme: OpenCoreTheme) -> Element<'static,
         .width(Length::Fill)
         .height(Length::Fixed(1.0))
         .style(move |_t: &Theme| container::Style {
-            background: Some(iced::Background::Color(
-                theme.border(BorderToken::Default),
-            )),
+            background: Some(iced::Background::Color(theme.border(BorderToken::Default))),
             ..Default::default()
         });
 
-    row![title_text, Space::new().width(Length::Fixed(SpacingToken::S2.value())), rule,]
-        .align_y(Vertical::Center)
-        .width(Length::Fill)
-        .into()
+    row![
+        title_text,
+        Space::new().width(Length::Fixed(SpacingToken::S2.value())),
+        rule,
+    ]
+    .align_y(Vertical::Center)
+    .width(Length::Fill)
+    .into()
 }
 
 fn welcome_row(
@@ -441,19 +437,15 @@ fn welcome_row(
         });
 
     let shortcut: Element<'static, WelcomeMessage> = match item.shortcut {
-        Some(shortcut) => container(
-            text(shortcut)
-                .size(TypeRole::MonoXs.size())
-                .style(move |_t: &Theme| text::Style {
-                    color: Some(theme.foreground(ForegroundToken::Muted)),
-                }),
-        )
+        Some(shortcut) => container(text(shortcut).size(TypeRole::MonoXs.size()).style(
+            move |_t: &Theme| text::Style {
+                color: Some(theme.foreground(ForegroundToken::Muted)),
+            },
+        ))
         .width(Length::Fixed(SHORTCUT_CELL))
         .align_x(Horizontal::Right)
         .into(),
-        None => Space::new()
-            .width(Length::Fixed(SHORTCUT_CELL))
-            .into(),
+        None => Space::new().width(Length::Fixed(SHORTCUT_CELL)).into(),
     };
 
     let row_content = row![

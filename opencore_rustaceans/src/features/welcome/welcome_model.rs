@@ -117,7 +117,10 @@ fn recent_projects_section(names: &[String]) -> WelcomeSection {
 pub fn build_screen(recent_paths: &[PathBuf]) -> WelcomeScreen {
     let mut sections = vec![get_started_section()];
     if !recent_paths.is_empty() {
-        let names: Vec<String> = recent_paths.iter().map(|path| project_label(path)).collect();
+        let names: Vec<String> = recent_paths
+            .iter()
+            .map(|path| project_label(path))
+            .collect();
         sections.push(recent_projects_section(&names));
     }
 
@@ -129,6 +132,7 @@ pub fn build_screen(recent_paths: &[PathBuf]) -> WelcomeScreen {
 }
 
 /// Default welcome catalog with no recent-project history.
+#[allow(dead_code)] // public facade API; exercised in unit tests
 pub fn default_screen() -> WelcomeScreen {
     build_screen(&[])
 }
@@ -143,6 +147,7 @@ pub fn all_items(screen: &WelcomeScreen) -> Vec<&WelcomeItem> {
 }
 
 /// Resolve a flat item index to its stable id.
+#[allow(dead_code)] // public facade API; exercised in unit tests
 pub fn item_id_at(screen: &WelcomeScreen, index: usize) -> Option<WelcomeItemId> {
     all_items(screen).get(index).map(|item| item.id)
 }
@@ -162,10 +167,7 @@ mod tests {
     fn get_started_section_has_four_action_rows() {
         let screen = default_screen();
         assert_eq!(screen.sections[0].items.len(), 4);
-        assert_eq!(
-            screen.sections[0].items[0].id,
-            WelcomeItemId::NewFile
-        );
+        assert_eq!(screen.sections[0].items[0].id, WelcomeItemId::NewFile);
     }
 
     #[test]
@@ -178,10 +180,7 @@ mod tests {
         assert_eq!(screen.sections[1].id, WelcomeSectionId::RecentProjects);
         assert_eq!(screen.sections[1].items.len(), 2);
         assert_eq!(screen.sections[1].items[0].label, "opencore_rustaceans");
-        assert_eq!(
-            screen.sections[1].items[0].shortcut.as_deref(),
-            Some("⌘ 1")
-        );
+        assert_eq!(screen.sections[1].items[0].shortcut.as_deref(), Some("⌘ 1"));
     }
 
     #[test]
@@ -197,10 +196,7 @@ mod tests {
     #[test]
     fn item_id_at_resolves_flat_index() {
         let screen = default_screen();
-        assert_eq!(
-            item_id_at(&screen, 2),
-            Some(WelcomeItemId::CloneRepository)
-        );
+        assert_eq!(item_id_at(&screen, 2), Some(WelcomeItemId::CloneRepository));
         assert_eq!(item_id_at(&screen, 99), None);
     }
 }

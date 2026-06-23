@@ -7,7 +7,7 @@ use crate::shared::design::{OpenCoreTheme, ThemeMode};
 use super::welcome_command_palette::{filter_commands, palette_commands};
 use super::welcome_history::touch_project;
 use super::welcome_messages::WelcomeMessage;
-use super::welcome_model::{WelcomeItemId, build_screen, item_id_at};
+use super::welcome_model::{WelcomeItemId, build_screen};
 use super::welcome_outcome::WelcomeOutcome;
 use super::welcome_overlay::WelcomeOverlay;
 
@@ -36,6 +36,7 @@ impl std::fmt::Debug for WelcomeState {
 }
 
 impl WelcomeState {
+    #[allow(dead_code)] // convenience ctor; production uses with_recent_paths
     pub fn new(theme_mode: ThemeMode) -> Self {
         Self::with_recent_paths(theme_mode, Vec::new())
     }
@@ -86,10 +87,6 @@ impl WelcomeState {
                 WelcomeOutcome::None
             }
             WelcomeMessage::ItemPressed(id) => self.request_action(id),
-            WelcomeMessage::HistoryLoaded(paths) => {
-                self.recent_paths = paths;
-                WelcomeOutcome::None
-            }
             WelcomeMessage::NewFileDialogCompleted(_) => WelcomeOutcome::None,
             WelcomeMessage::OpenProjectDialogCompleted(path) => match path {
                 Some(path) => self.open_project(path),
@@ -197,10 +194,6 @@ impl WelcomeState {
             self.palette_selection = 0;
         }
     }
-
-    pub fn item_id_at(&self, index: usize) -> Option<WelcomeItemId> {
-        item_id_at(&self.screen(), index)
-    }
 }
 
 #[cfg(test)]
@@ -268,7 +261,9 @@ mod tests {
     fn open_project_updates_history_and_returns_workspace_opened() {
         let mut state = WelcomeState::new(ThemeMode::Dark);
         let path = PathBuf::from("/tmp/demo");
-        let outcome = state.update(WelcomeMessage::OpenProjectDialogCompleted(Some(path.clone())));
+        let outcome = state.update(WelcomeMessage::OpenProjectDialogCompleted(Some(
+            path.clone(),
+        )));
         assert_eq!(outcome, WelcomeOutcome::WorkspaceOpened(path.clone()));
         assert_eq!(state.recent_paths[0], path);
     }
@@ -286,8 +281,7 @@ mod tests {
     fn command_palette_select_runs_matching_action() {
         let mut state = WelcomeState::new(ThemeMode::Dark);
         state.overlay = WelcomeOverlay::CommandPalette;
-        let outcome =
-            state.update(WelcomeMessage::CommandPaletteSelect(0));
+        let outcome = state.update(WelcomeMessage::CommandPaletteSelect(0));
         assert_eq!(
             outcome,
             WelcomeOutcome::ActionRequested(WelcomeItemId::NewFile)

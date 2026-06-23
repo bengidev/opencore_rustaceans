@@ -8,8 +8,8 @@ mod shared;
 use std::sync::Arc;
 
 use features::onboarding::{
-    FileOnboardingPersistence, InMemoryOnboardingPersistence, OnboardingPersistence, run as run_onboarding,
-    should_run,
+    FileOnboardingPersistence, InMemoryOnboardingPersistence, OnboardingPersistence,
+    run as run_onboarding, should_run,
 };
 use features::welcome::run as run_welcome;
 use shared::design::ThemeMode;

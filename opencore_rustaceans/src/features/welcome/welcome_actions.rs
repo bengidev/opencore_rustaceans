@@ -25,7 +25,7 @@ pub fn default_clone_parent() -> PathBuf {
 
 /// Build the destination path for cloning `url` under `parent`.
 pub fn clone_destination(parent: &Path, url: &str) -> Option<PathBuf> {
-  Some(parent.join(repo_name_from_url(url)?))
+    Some(parent.join(repo_name_from_url(url)?))
 }
 
 /// Clone a git repository into `destination`.

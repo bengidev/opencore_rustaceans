@@ -68,10 +68,7 @@ mod tests {
     fn round_trips_paths() {
         let tmp = TempDir::new().unwrap();
         let store = FileWelcomeHistory::new_at(tmp.path());
-        let paths = vec![
-            PathBuf::from("/tmp/demo"),
-            PathBuf::from("/tmp/playground"),
-        ];
+        let paths = vec![PathBuf::from("/tmp/demo"), PathBuf::from("/tmp/playground")];
         store.save(&paths).unwrap();
         assert_eq!(store.load().unwrap(), paths);
     }
