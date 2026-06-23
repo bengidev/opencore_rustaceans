@@ -9,7 +9,7 @@ How the engineering skills should consume this repo's domain documentation when 
 ## Before exploring, read these
 
 - **`CONTEXT-MAP.md`** at the repo root — identifies each context and where its `CONTEXT.md` lives. Read every `CONTEXT.md` relevant to the topic.
-- **`docs/adr/`** — system-wide ADRs. Also check `src/<context>/docs/adr/` (or the path listed in the map) for context-scoped decisions.
+- **`docs/adr/`** — system-wide ADRs. Also check context paths listed in the map for context-scoped decisions.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill creates them lazily when terms or decisions actually get resolved.
 
@@ -19,13 +19,13 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 /
 ├── CONTEXT-MAP.md
 ├── docs/adr/                          ← system-wide decisions
-└── src/
-    ├── <context-a>/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── <context-b>/
-        ├── CONTEXT.md
-        └── docs/adr/
+└── opencore_rustaceans/src/
+    ├── features/
+    │   ├── onboarding/
+    │   │   └── CONTEXT.md
+    │   └── welcome/
+    │       └── CONTEXT.md
+    └── shared/design/                 ← design tokens (no CONTEXT.md yet)
 ```
 
 ## Use the glossary's vocabulary

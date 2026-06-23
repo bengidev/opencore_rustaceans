@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues live in GitHub Issues for this repo. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues for this repo; external PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
