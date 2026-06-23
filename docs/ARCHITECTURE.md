@@ -7,8 +7,8 @@ appears.
 ## Composition root
 
 `src/main.rs` is the application composition root. It chooses persistence
-implementations and launches the onboarding Iced runtime. No feature logic
-accumulates there.
+implementations and launches onboarding or the welcome home screen. No feature
+logic accumulates there.
 
 ## Internal modules
 
@@ -38,7 +38,13 @@ src/
 │       ├── welcome_messages.rs            # Command messages
 │       ├── welcome_outcome.rs             # routing outcomes
 │       ├── welcome_state.rs               # State reducer
-│       └── welcome_view.rs                # Iced view
+│       ├── welcome_view.rs                # Iced view + overlays
+│       ├── welcome_history.rs             # recent-project Strategy trait
+│       ├── welcome_file_history.rs        # filesystem Strategy
+│       ├── welcome_memory_history.rs      # in-memory Strategy
+│       ├── welcome_actions.rs             # file/git helpers
+│       ├── welcome_command_palette.rs     # palette filtering
+│       └── welcome_overlay.rs             # overlay enum
 └── shared/
     ├── mod.rs
     └── design/
@@ -53,7 +59,7 @@ src/
 |---------|-------|------|
 | **Facade** | `onboarding/mod.rs`, `welcome/mod.rs` | Hides prefixed siblings; exposes `run`, `view`, state types |
 | **Composite** | `welcome_model.rs` | Screen → sections → items content tree |
-| **Strategy** | `OnboardingPersistence` | Swaps file vs in-memory backends |
+| **Strategy** | `OnboardingPersistence`, `WelcomeHistory` | Swaps file vs in-memory backends |
 | **Command** | `OnboardingMessage` | Encodes user intents decoupled from widgets |
 | **State** | `OnboardingState::update` | Pure transitions + `OnboardingOutcome` routing |
 | **Factory Method** | `OpenCoreTheme::from_mode`, persistence constructors | Pick concrete products |
