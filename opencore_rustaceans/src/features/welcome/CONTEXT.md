@@ -24,10 +24,12 @@ update persisted recent-project history.
 | Item | Behavior |
 |------|----------|
 | New File | Save dialog → creates empty file → status banner |
-| Open Project | Folder picker → opens project path → history bump |
+| Open Project | Folder picker → validates path → history bump → `WorkspaceOpened` outcome |
 | Clone Repository | Modal URL → `git clone` into `~/OpenCore/repositories` |
 | Open Command Palette | Double-shift or row press → searchable command list |
-| Recent project | Opens stored path and bumps history |
+| Recent project | Validates stored path → history bump → `WorkspaceOpened` outcome |
+
+`WorkspaceOpened` is the composition-root hook for a future workspace shell; the welcome screen shows a status banner until that host exists.
 
 Keyboard: `⌘N`, `⌘O`, `⌘1`–`⌘5`, double `⇧`, `Esc` dismisses overlays.
 
@@ -37,8 +39,9 @@ Callers outside the module import only from `features::welcome`:
 
 - `run` / `run_with_history` — Iced application entry
 - `view` — embeddable view for multi-window hosts
+- `subscription` — keyboard shortcuts for embeddable hosts (`⌘N`, `⌘O`, `⌘1`–`⌘5`, double `⇧`, `Esc`)
 - `WelcomeState`, `WelcomeMessage`, `WelcomeOutcome`
-- `WelcomeItemId`, `WelcomeScreen`, `build_screen`
+- `WelcomeItemId`, `WelcomeScreen`, `build_screen`, `default_screen`
 - `WelcomeHistory`, `FileWelcomeHistory`, `InMemoryWelcomeHistory`
 
 ## Branding

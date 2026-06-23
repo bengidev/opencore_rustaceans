@@ -1,6 +1,6 @@
 //! OpenCore Rustaceans — composition root.
 //!
-//! Boots onboarding on first run, then the welcome home screen.
+//! Boots onboarding on first run when needed, then the welcome home screen.
 
 mod features;
 mod shared;
@@ -17,7 +17,7 @@ use shared::design::ThemeMode;
 fn main() -> iced::Result {
     let persistence = load_persistence();
     if should_run(persistence.as_ref()) {
-        return run_onboarding(persistence, ThemeMode::Dark);
+        run_onboarding(persistence, ThemeMode::Dark)?;
     }
     run_welcome(ThemeMode::Dark)
 }

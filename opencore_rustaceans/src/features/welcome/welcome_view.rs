@@ -124,18 +124,35 @@ fn overlay_layer(state: &WelcomeState, theme: OpenCoreTheme) -> Element<'static,
         WelcomeOverlay::CommandPalette => command_palette_overlay(state, theme),
         WelcomeOverlay::CloneRepository => {
             let panel = clone_repository_panel(state, theme);
-            container(panel)
+            stack![
+                MouseArea::new(
+                    container(Space::new())
+                        .width(Length::Fill)
+                        .height(Length::Fill)
+                        .style(move |_t: &Theme| container::Style {
+                            background: Some(iced::Background::Color(iced::Color::from_rgba(
+                                0.0, 0.0, 0.0, 0.55,
+                            ))),
+                            ..Default::default()
+                        }),
+                )
+                .on_press(WelcomeMessage::CloneCancel)
+                .interaction(iced::mouse::Interaction::Pointer),
+                column![
+                    Space::new().height(Length::Fill),
+                    row![
+                        Space::new().width(Length::Fill),
+                        panel,
+                        Space::new().width(Length::Fill),
+                    ],
+                    Space::new().height(Length::Fill),
+                ]
                 .width(Length::Fill)
-                .height(Length::Fill)
-                .align_x(Horizontal::Center)
-                .align_y(Vertical::Center)
-                .style(move |_t: &Theme| container::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.0, 0.0, 0.0, 0.55,
-                    ))),
-                    ..Default::default()
-                })
-                .into()
+                .height(Length::Fill),
+            ]
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
         }
         WelcomeOverlay::None => Space::new().into(),
     }

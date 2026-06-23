@@ -1,6 +1,7 @@
 //! Welcome screen state reducer.
 
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use crate::shared::design::{OpenCoreTheme, ThemeMode};
 
@@ -22,6 +23,7 @@ pub struct WelcomeState {
     pub clone_url: String,
     pub clone_error: Option<String>,
     pub status: Option<String>,
+    last_shift_press: Option<Instant>,
 }
 
 impl std::fmt::Debug for WelcomeState {
@@ -53,6 +55,7 @@ impl WelcomeState {
             clone_url: String::new(),
             clone_error: None,
             status: None,
+            last_shift_press: None,
         }
     }
 
@@ -77,17 +80,23 @@ impl WelcomeState {
         let item_count = super::welcome_model::all_items(&screen).len();
 
         match message {
-            WelcomeMessage::ToggleTheme => {
-                self.theme_mode = self.theme_mode.toggle();
-                self.theme = OpenCoreTheme::from_mode(self.theme_mode);
-                WelcomeOutcome::ThemeToggled(self.theme_mode)
-            }
             WelcomeMessage::ItemHovered(index) => {
                 self.hovered_item = index.filter(|i| *i < item_count);
                 WelcomeOutcome::None
             }
             WelcomeMessage::ItemPressed(id) => self.request_action(id),
-            WelcomeMessage::NewFileDialogCompleted(_) => WelcomeOutcome::None,
+            WelcomeMessage::NewFileDialogCompleted(None) => WelcomeOutcome::None,
+            WelcomeMessage::NewFileDialogCompleted(Some(_)) => WelcomeOutcome::None,
+            WelcomeMessage::NewFileResult(result) => match result {
+                Ok(path) => {
+                    self.status = Some(format!("Created {}", path.display()));
+                    WelcomeOutcome::None
+                }
+                Err(error) => {
+                    self.status = Some(error);
+                    WelcomeOutcome::None
+                }
+            },
             WelcomeMessage::OpenProjectDialogCompleted(path) => match path {
                 Some(path) => self.open_project(path),
                 None => WelcomeOutcome::None,
@@ -99,7 +108,7 @@ impl WelcomeState {
             }
             WelcomeMessage::CloneSubmit => {
                 self.clone_error = None;
-                WelcomeOutcome::None
+                WelcomeOutcome::CloneRequested(self.clone_url.clone())
             }
             WelcomeMessage::CloneCancel => {
                 self.overlay = WelcomeOverlay::None;
@@ -148,10 +157,15 @@ impl WelcomeState {
                 self.status = None;
                 WelcomeOutcome::None
             }
-            WelcomeMessage::ShiftPressed => WelcomeOutcome::None,
-            WelcomeMessage::ActionCompleted { summary, path } => {
-                self.status = Some(summary);
-                touch_project(&mut self.recent_paths, path);
+            WelcomeMessage::ShiftPressed => {
+                let now = Instant::now();
+                let double_tap = self.last_shift_press.is_some_and(|previous| {
+                    now.duration_since(previous) < Duration::from_millis(450)
+                });
+                self.last_shift_press = Some(now);
+                if double_tap {
+                    self.toggle_command_palette();
+                }
                 WelcomeOutcome::None
             }
         }
@@ -179,7 +193,12 @@ impl WelcomeState {
     }
 
     fn open_project(&mut self, path: PathBuf) -> WelcomeOutcome {
+        if !path.exists() {
+            self.status = Some(format!("Path not found: {}", path.display()));
+            return WelcomeOutcome::None;
+        }
         touch_project(&mut self.recent_paths, path.clone());
+        self.status = Some(format!("Opened {}", path.display()));
         WelcomeOutcome::WorkspaceOpened(path)
     }
 
@@ -208,11 +227,49 @@ mod tests {
     }
 
     #[test]
-    fn toggle_theme_flips_mode_and_returns_outcome() {
+    fn double_shift_toggles_command_palette() {
         let mut state = WelcomeState::new(ThemeMode::Dark);
-        let outcome = state.update(WelcomeMessage::ToggleTheme);
-        assert_eq!(state.theme_mode, ThemeMode::Light);
-        assert_eq!(outcome, WelcomeOutcome::ThemeToggled(ThemeMode::Light));
+        state.update(WelcomeMessage::ShiftPressed);
+        assert_eq!(state.overlay, WelcomeOverlay::None);
+        state.update(WelcomeMessage::ShiftPressed);
+        assert_eq!(state.overlay, WelcomeOverlay::CommandPalette);
+    }
+
+    #[test]
+    fn new_file_result_sets_status_without_history_bump() {
+        let mut state = WelcomeState::new(ThemeMode::Dark);
+        let path = PathBuf::from("/tmp/new-file.rs");
+        state.update(WelcomeMessage::NewFileResult(Ok(path)));
+        assert_eq!(state.status, Some(String::from("Created /tmp/new-file.rs")));
+        assert!(state.recent_paths.is_empty());
+    }
+
+    #[test]
+    fn open_project_rejects_missing_path() {
+        let mut state = WelcomeState::new(ThemeMode::Dark);
+        let path = PathBuf::from("/tmp/definitely-missing-opencore-path");
+        let outcome = state.update(WelcomeMessage::OpenProjectDialogCompleted(Some(
+            path.clone(),
+        )));
+        assert_eq!(outcome, WelcomeOutcome::None);
+        assert!(state.recent_paths.is_empty());
+        assert_eq!(
+            state.status,
+            Some(format!("Path not found: {}", path.display()))
+        );
+    }
+
+    #[test]
+    fn open_project_updates_history_and_returns_workspace_opened() {
+        let mut state = WelcomeState::new(ThemeMode::Dark);
+        let tmp = tempfile::TempDir::new().unwrap();
+        let path = tmp.path().to_path_buf();
+        let outcome = state.update(WelcomeMessage::OpenProjectDialogCompleted(Some(
+            path.clone(),
+        )));
+        assert_eq!(outcome, WelcomeOutcome::WorkspaceOpened(path.clone()));
+        assert_eq!(state.recent_paths[0], path);
+        assert_eq!(state.status, Some(format!("Opened {}", path.display())));
     }
 
     #[test]
@@ -255,17 +312,6 @@ mod tests {
             outcome,
             WelcomeOutcome::ActionRequested(WelcomeItemId::NewFile)
         );
-    }
-
-    #[test]
-    fn open_project_updates_history_and_returns_workspace_opened() {
-        let mut state = WelcomeState::new(ThemeMode::Dark);
-        let path = PathBuf::from("/tmp/demo");
-        let outcome = state.update(WelcomeMessage::OpenProjectDialogCompleted(Some(
-            path.clone(),
-        )));
-        assert_eq!(outcome, WelcomeOutcome::WorkspaceOpened(path.clone()));
-        assert_eq!(state.recent_paths[0], path);
     }
 
     #[test]

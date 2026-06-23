@@ -3,12 +3,12 @@
 //! ## Design patterns (GoF)
 //!
 //! * **Facade** — this `mod.rs` re-exports the composition-facing API
-//!   (`run`, `view`, `WelcomeState`, …) while hiding prefixed siblings.
+//!   (`run`, `view`, `subscription`, `WelcomeState`, …) while hiding prefixed siblings.
 //! * **Composite** — [`welcome_model::WelcomeScreen`] nests sections and items.
 //! * **Command** — [`WelcomeMessage`] encodes user intents; the reducer
 //!   dispatches them without knowing UI origin.
-//! * **State** — [`WelcomeState::update`] transitions hover/theme locally;
-//!   [`WelcomeOutcome`] routes action requests to the host.
+//! * **State** — [`WelcomeState::update`] owns transitions; [`WelcomeOutcome`]
+//!   routes side effects to the host.
 //! * **Strategy** — [`WelcomeHistory`] swaps filesystem vs in-memory backends.
 //! * **Factory Method** — [`OpenCoreTheme::from_mode`] picks the concrete theme.
 //!
@@ -49,9 +49,7 @@ pub use welcome_outcome::WelcomeOutcome;
 pub use welcome_state::WelcomeState;
 pub use welcome_view::view;
 
-use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
 
 use iced::keyboard::{self, Modifiers, key};
 use iced::{Element, Subscription, Task, Theme};
@@ -78,7 +76,6 @@ pub fn run_with_history(
                 WelcomeApp {
                     state,
                     history: history.clone(),
-                    last_shift_press: None,
                 },
                 Task::none(),
             )
@@ -88,9 +85,25 @@ pub fn run_with_history(
     )
     .title(WelcomeApp::title)
     .theme(WelcomeApp::theme)
-    .subscription(WelcomeApp::subscription)
+    .subscription(|_app| subscription())
     .window_size(iced::Size::new(720.0, 640.0))
     .run()
+}
+
+/// Keyboard shortcuts for embeddable welcome hosts.
+pub fn subscription() -> Subscription<Msg> {
+    keyboard::listen().filter_map(|event| match event {
+        keyboard::Event::KeyPressed {
+            key: keyboard::Key::Named(key::Named::Shift),
+            ..
+        } => Some(Msg::ShiftPressed),
+        keyboard::Event::KeyPressed {
+            key: keyboard::Key::Named(key::Named::Escape),
+            ..
+        } => Some(Msg::CommandPaletteDismiss),
+        keyboard::Event::KeyPressed { key, modifiers, .. } => shortcut_message(key, modifiers),
+        _ => None,
+    })
 }
 
 fn load_history() -> Arc<dyn WelcomeHistory> {
@@ -104,21 +117,13 @@ fn load_history() -> Arc<dyn WelcomeHistory> {
 pub struct WelcomeApp {
     state: WelcomeState,
     history: Arc<dyn WelcomeHistory>,
-    last_shift_press: Option<Instant>,
 }
 
 impl WelcomeApp {
     fn update(&mut self, message: Msg) -> Task<Msg> {
-        if let Msg::ShiftPressed = message {
-            return self.handle_shift_pressed();
-        }
-
-        if let Msg::CloneSubmit = message {
-            return self.start_clone();
-        }
-
         if let Msg::NewFileDialogCompleted(Some(path)) = message {
-            return self.finish_new_file(path);
+            let result = create_empty_file(&path).map(|()| path);
+            return Task::done(Msg::NewFileResult(result));
         }
 
         let outcome = self.state.update(message);
@@ -127,53 +132,16 @@ impl WelcomeApp {
         match outcome {
             Outcome::ActionRequested(WelcomeItemId::NewFile) => WelcomeApp::pick_new_file(),
             Outcome::ActionRequested(WelcomeItemId::OpenProject) => WelcomeApp::pick_open_project(),
-            Outcome::ActionRequested(WelcomeItemId::CloneRepository) => Task::none(),
-            Outcome::WorkspaceOpened(path) => {
-                self.state.status = Some(format!("Opened {}", path.display()));
-                Task::none()
-            }
+            Outcome::CloneRequested(url) => WelcomeApp::start_clone(url),
+            Outcome::WorkspaceOpened(_) => Task::none(),
             _ => Task::none(),
         }
-    }
-
-    fn handle_shift_pressed(&mut self) -> Task<Msg> {
-        let now = Instant::now();
-        let double_tap = self
-            .last_shift_press
-            .is_some_and(|previous| now.duration_since(previous) < Duration::from_millis(450));
-        self.last_shift_press = Some(now);
-
-        if double_tap {
-            self.state.update(Msg::CommandPaletteToggle);
-        }
-        Task::none()
     }
 
     fn persist_history(&self) {
         if let Err(error) = self.history.save(&self.state.recent_paths) {
             eprintln!("failed to persist welcome history: {error}");
         }
-    }
-
-    fn finish_new_file(&mut self, path: PathBuf) -> Task<Msg> {
-        match create_empty_file(&path) {
-            Ok(()) => {
-                let summary = format!("Created {}", path.display());
-                let parent = path
-                    .parent()
-                    .map(std::path::Path::to_path_buf)
-                    .unwrap_or(path);
-                self.state.update(Msg::ActionCompleted {
-                    path: parent,
-                    summary,
-                });
-                self.persist_history();
-            }
-            Err(error) => {
-                self.state.status = Some(error);
-            }
-        }
-        Task::none()
     }
 
     fn pick_new_file() -> Task<Msg> {
@@ -202,8 +170,7 @@ impl WelcomeApp {
         )
     }
 
-    fn start_clone(&mut self) -> Task<Msg> {
-        let url = self.state.clone_url.clone();
+    fn start_clone(url: String) -> Task<Msg> {
         Task::perform(
             async move {
                 let parent = default_clone_parent();
@@ -218,21 +185,6 @@ impl WelcomeApp {
 
     fn view(&self) -> Element<'_, Msg> {
         view(&self.state)
-    }
-
-    fn subscription(&self) -> Subscription<Msg> {
-        keyboard::listen().filter_map(|event| match event {
-            keyboard::Event::KeyPressed {
-                key: keyboard::Key::Named(key::Named::Shift),
-                ..
-            } => Some(Msg::ShiftPressed),
-            keyboard::Event::KeyPressed {
-                key: keyboard::Key::Named(key::Named::Escape),
-                ..
-            } => Some(Msg::CommandPaletteDismiss),
-            keyboard::Event::KeyPressed { key, modifiers, .. } => shortcut_message(key, modifiers),
-            _ => None,
-        })
     }
 
     fn title(&self) -> String {
