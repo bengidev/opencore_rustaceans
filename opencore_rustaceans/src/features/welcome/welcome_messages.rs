@@ -5,12 +5,11 @@ use std::path::PathBuf;
 use super::welcome_model::WelcomeItemId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)] // ToggleTheme: reducer + tests; other variants wired from UI/host
 pub enum WelcomeMessage {
-    ToggleTheme,
     ItemHovered(Option<usize>),
     ItemPressed(WelcomeItemId),
     NewFileDialogCompleted(Option<PathBuf>),
+    NewFileResult(Result<PathBuf, String>),
     OpenProjectDialogCompleted(Option<PathBuf>),
     CloneUrlChanged(String),
     CloneSubmit,
@@ -22,5 +21,4 @@ pub enum WelcomeMessage {
     CommandPaletteDismiss,
     StatusDismiss,
     ShiftPressed,
-    ActionCompleted { path: PathBuf, summary: String },
 }

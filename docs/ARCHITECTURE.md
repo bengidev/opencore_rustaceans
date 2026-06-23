@@ -67,16 +67,17 @@ src/
 
 ## TDD workflow
 
-Tests are colocated in each `onboarding_*.rs` module. Typical cycle:
+Tests are colocated in each feature module (`onboarding_*.rs`, `welcome_*.rs`). Typical cycle:
 
 1. **Red** — add a failing `#[test]` beside the reducer or strategy.
 2. **Green** — implement the smallest change in the sibling module.
-3. **Refactor** — keep the facade thin; run `cargo test onboarding`.
+3. **Refactor** — keep the facade thin; run `cargo test onboarding` or `cargo test welcome`.
 
 Run the suite:
 
 ```bash
 cargo test onboarding
+cargo test welcome
 ```
 
 ## Boundary rules

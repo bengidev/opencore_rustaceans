@@ -26,3 +26,17 @@ impl WelcomeHistory for InMemoryWelcomeHistory {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn round_trips() {
+        let store = InMemoryWelcomeHistory::new();
+        assert!(store.load().unwrap().is_empty());
+        let paths = vec![PathBuf::from("/tmp/demo")];
+        store.save(&paths).unwrap();
+        assert_eq!(store.load().unwrap(), paths);
+    }
+}

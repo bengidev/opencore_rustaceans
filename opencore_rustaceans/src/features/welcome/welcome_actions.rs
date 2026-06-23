@@ -6,7 +6,13 @@ use std::process::Command;
 /// Derive a destination folder name from a git remote URL.
 pub fn repo_name_from_url(url: &str) -> Option<String> {
     let trimmed = url.trim().trim_end_matches('/');
-    let segment = trimmed.rsplit('/').next()?.trim_end_matches(".git");
+
+    if let Some((_, repo)) = trimmed.rsplit_once(':') {
+        let name = repo.rsplit('/').next()?.trim_end_matches(".git").trim();
+        return (!name.is_empty()).then(|| name.to_owned());
+    }
+
+    let segment = trimmed.rsplit('/').next()?.trim_end_matches(".git").trim();
     if segment.is_empty() {
         None
     } else {
@@ -86,6 +92,10 @@ mod tests {
     fn repo_name_from_ssh_url() {
         assert_eq!(
             repo_name_from_url("git@github.com:org/playground.git"),
+            Some(String::from("playground"))
+        );
+        assert_eq!(
+            repo_name_from_url("git@github.com:playground.git"),
             Some(String::from("playground"))
         );
     }
