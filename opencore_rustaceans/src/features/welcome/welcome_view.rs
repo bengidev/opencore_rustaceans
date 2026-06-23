@@ -8,7 +8,7 @@ use iced::Font;
 use iced::Length;
 use iced::Theme;
 use iced::alignment::{Horizontal, Vertical};
-use iced::widget::{MouseArea, Space, button, column, container, row, text};
+use iced::widget::{MouseArea, Space, button, column, container, row, stack, text, text_input};
 
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_tokens::{
@@ -17,6 +17,7 @@ use crate::shared::design::design_tokens::{
 
 use super::welcome_messages::WelcomeMessage;
 use super::welcome_model::{WelcomeIcon, WelcomeItem, WelcomeScreen, WelcomeSection};
+use super::welcome_overlay::WelcomeOverlay;
 use super::welcome_state::WelcomeState;
 
 const CONTENT_MAX_WIDTH: f32 = 480.0;
@@ -57,7 +58,7 @@ pub fn view(state: &WelcomeState) -> Element<'_, WelcomeMessage> {
     ]
     .width(Length::Fill);
 
-    container(centered)
+    let base: Element<'_, WelcomeMessage> = container(centered)
         .width(Length::Fill)
         .height(Length::Fill)
         .align_y(Vertical::Center)
@@ -65,6 +66,245 @@ pub fn view(state: &WelcomeState) -> Element<'_, WelcomeMessage> {
             background: Some(iced::Background::Color(
                 theme.background(BackgroundToken::Primary),
             )),
+            ..Default::default()
+        })
+        .into();
+
+    let mut layered = stack![base];
+
+    if let Some(status) = &state.status {
+        layered = layered.push(
+            container(status_banner(status.clone(), theme))
+                .align_y(Vertical::Bottom)
+                .height(Length::Fill)
+                .width(Length::Fill),
+        );
+    }
+
+    if state.overlay != WelcomeOverlay::None {
+        layered = layered.push(overlay_layer(state, theme));
+    }
+
+    layered.width(Length::Fill).height(Length::Fill).into()
+}
+
+fn status_banner(summary: String, theme: OpenCoreTheme) -> Element<'static, WelcomeMessage> {
+    container(
+        row![
+            text(summary)
+                .size(TypeRole::BodyMd.size())
+                .style(move |_t: &Theme| text::Style {
+                    color: Some(theme.foreground(ForegroundToken::Primary)),
+                }),
+            Space::new().width(Length::Fill),
+            button(text("×").size(16.0))
+                .on_press(WelcomeMessage::StatusDismiss)
+                .style(|_t: &Theme, _s| button::Style {
+                    background: None,
+                    text_color: iced::Color::WHITE,
+                    ..Default::default()
+                }),
+        ]
+        .align_y(Vertical::Center)
+        .width(Length::Fill),
+    )
+    .padding([8.0, 16.0])
+    .width(Length::Fill)
+    .style(move |_t: &Theme| container::Style {
+        background: Some(iced::Background::Color(
+            theme.background(BackgroundToken::Secondary),
+        )),
+        ..Default::default()
+    })
+    .into()
+}
+
+fn overlay_layer(state: &WelcomeState, theme: OpenCoreTheme) -> Element<'static, WelcomeMessage> {
+    match state.overlay {
+        WelcomeOverlay::CommandPalette => command_palette_overlay(state, theme),
+        WelcomeOverlay::CloneRepository => {
+            let panel = clone_repository_panel(state, theme);
+            container(panel)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .align_x(Horizontal::Center)
+                .align_y(Vertical::Center)
+                .style(move |_t: &Theme| container::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.0, 0.0, 0.0, 0.55,
+                    ))),
+                    ..Default::default()
+                })
+                .into()
+        }
+        WelcomeOverlay::None => Space::new().into(),
+    }
+}
+
+fn command_palette_overlay(
+    state: &WelcomeState,
+    theme: OpenCoreTheme,
+) -> Element<'static, WelcomeMessage> {
+    let panel = command_palette_panel(state, theme);
+
+    stack![
+        MouseArea::new(
+            container(Space::new())
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .style(move |_t: &Theme| container::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.0, 0.0, 0.0, 0.55,
+                    ))),
+                    ..Default::default()
+                }),
+        )
+        .on_press(WelcomeMessage::CommandPaletteDismiss)
+        .interaction(iced::mouse::Interaction::Pointer),
+        column![
+            Space::new().height(Length::Fill),
+            row![
+                Space::new().width(Length::Fill),
+                panel,
+                Space::new().width(Length::Fill),
+            ],
+            Space::new().height(Length::Fill),
+        ]
+        .width(Length::Fill)
+        .height(Length::Fill),
+    ]
+    .width(Length::Fill)
+    .height(Length::Fill)
+    .into()
+}
+
+fn command_palette_panel(
+    state: &WelcomeState,
+    theme: OpenCoreTheme,
+) -> Element<'static, WelcomeMessage> {
+    let commands = state.filtered_palette_commands();
+    let mut rows = column![].spacing(ROW_GAP);
+
+    for (index, command) in commands.iter().enumerate() {
+        let label = text(command.label.clone())
+            .size(TypeRole::LabelMd.size())
+            .width(Length::Fill)
+            .style(move |_t: &Theme| text::Style {
+                color: Some(theme.foreground(ForegroundToken::Primary)),
+            });
+
+        let detail: Element<'static, WelcomeMessage> = match command.detail.as_ref() {
+            Some(detail) => text(detail.clone())
+                .size(TypeRole::MonoXs.size())
+                .style(move |_t: &Theme| text::Style {
+                    color: Some(theme.foreground(ForegroundToken::Muted)),
+                })
+                .into(),
+            None => Space::new().width(Length::Shrink).into(),
+        };
+
+        let row_content = row![label, detail]
+        .spacing(8.0)
+        .width(Length::Fill);
+
+        rows = rows.push(
+            button(row_content)
+                .width(Length::Fill)
+                .padding([ROW_PAD_V, ROW_PAD_H])
+                .on_press(WelcomeMessage::CommandPaletteSelect(index))
+                .style(move |_t: &Theme, status| welcome_row_style(theme, status)),
+        );
+    }
+
+    let search = text_input("Type a command…", &state.palette_query)
+        .on_input(WelcomeMessage::CommandPaletteQueryChanged)
+        .padding(10.0)
+        .size(TypeRole::BodyMd.size());
+
+    container(
+        column![
+            text("Command Palette")
+                .size(TypeRole::BodyLg.size())
+                .style(move |_t: &Theme| text::Style {
+                    color: Some(theme.foreground(ForegroundToken::Primary)),
+                }),
+            search,
+            rows,
+        ]
+        .spacing(12.0)
+        .width(Length::Fill),
+    )
+    .width(Length::Fixed(CONTENT_MAX_WIDTH))
+    .padding(20.0)
+    .style(move |_t: &Theme| container::Style {
+        background: Some(iced::Background::Color(
+            theme.background(BackgroundToken::Secondary),
+        )),
+        border: iced::Border {
+            radius: 8.0.into(),
+            width: 1.0,
+            color: theme.border(BorderToken::Default),
+        },
+        ..Default::default()
+    })
+    .into()
+}
+
+fn clone_repository_panel(
+    state: &WelcomeState,
+    theme: OpenCoreTheme,
+) -> Element<'static, WelcomeMessage> {
+    let error = state.clone_error.as_ref().map(|error| {
+        text(error.clone())
+            .size(TypeRole::BodyMd.size())
+            .style(move |_t: &Theme| text::Style {
+                color: Some(theme.foreground(ForegroundToken::Accent)),
+            })
+    });
+
+    let mut body = column![
+        text("Clone Repository")
+            .size(TypeRole::BodyLg.size())
+            .style(move |_t: &Theme| text::Style {
+                color: Some(theme.foreground(ForegroundToken::Primary)),
+            }),
+        text_input("https://example.com/org/repo.git", &state.clone_url)
+            .on_input(WelcomeMessage::CloneUrlChanged)
+            .padding(10.0)
+            .size(TypeRole::BodyMd.size()),
+    ]
+    .spacing(12.0)
+    .width(Length::Fill);
+
+    if let Some(error) = error {
+        body = body.push(error);
+    }
+
+    body = body.push(
+        row![
+            button(text("Cancel"))
+                .on_press(WelcomeMessage::CloneCancel)
+                .padding([8.0, 16.0]),
+            Space::new().width(Length::Fill),
+            button(text("Clone"))
+                .on_press(WelcomeMessage::CloneSubmit)
+                .padding([8.0, 16.0]),
+        ]
+        .width(Length::Fill),
+    );
+
+    container(body)
+        .width(Length::Fixed(CONTENT_MAX_WIDTH))
+        .padding(20.0)
+        .style(move |_t: &Theme| container::Style {
+            background: Some(iced::Background::Color(
+                theme.background(BackgroundToken::Secondary),
+            )),
+            border: iced::Border {
+                radius: 8.0.into(),
+                width: 1.0,
+                color: theme.border(BorderToken::Default),
+            },
             ..Default::default()
         })
         .into()
@@ -138,13 +378,13 @@ fn sections_column(
 
     for section in screen.sections {
         let mut rows = column![].spacing(ROW_GAP);
-        for item in section.items {
+        for item in &section.items {
             let index = flat_index;
-            rows = rows.push(welcome_row(*item, index, theme));
+            rows = rows.push(welcome_row(item.clone(), index, theme));
             flat_index += 1;
         }
 
-        sections = sections.push(section_block(*section, rows.into(), theme));
+        sections = sections.push(section_block(section, rows.into(), theme));
     }
 
     sections.width(Length::Fill).into()
