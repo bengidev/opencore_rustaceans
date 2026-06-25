@@ -25,6 +25,7 @@ pub enum ShellUpdate {
     SessionChanged,
     ProjectClosed,
     StreamRequested(crate::features::workspace::ChatRequest),
+    ModelsFetchRequested,
     WelcomeAction(WelcomeOutcome),
 }
 
@@ -113,6 +114,7 @@ fn map_workspace_outcome(outcome: WorkspaceOutcome) -> ShellUpdate {
         WorkspaceOutcome::SessionChanged => ShellUpdate::SessionChanged,
         WorkspaceOutcome::ProjectClosed => ShellUpdate::ProjectClosed,
         WorkspaceOutcome::StreamRequested(request) => ShellUpdate::StreamRequested(request),
+        WorkspaceOutcome::ModelsFetchRequested => ShellUpdate::ModelsFetchRequested,
     }
 }
 

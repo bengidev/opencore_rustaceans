@@ -19,22 +19,24 @@ use crate::features::welcome::{
 };
 use crate::features::workspace::{
     AiProvider, FileWorkspaceSession, InMemoryWorkspaceCredentialStore, InMemoryWorkspaceSession,
-    KeychainWorkspaceCredentialStore, OPENROUTER_PROVIDER_ID, OpenRouterProvider,
+    OPENROUTER_PROVIDER_ID, OpenRouterProvider, PersistedWorkspaceCredentialStore,
     WorkspaceCredentialStore, WorkspaceSession, view as workspace_view,
 };
 use crate::shared::design::ThemeMode;
+use crate::shared::design::iced_theme;
 
-use app_effects::{boot_screen, handle_update, persist_session};
+use app_effects::{boot_screen, handle_update, persist_session, start_models_fetch};
 use app_messages::ShellMessage as Msg;
 
 /// Launch the full OpenCore application shell.
 pub fn run(theme_mode: ThemeMode) -> iced::Result {
+    let credentials = load_credentials();
     run_with_backends(
         theme_mode,
         load_history(),
         load_session(),
-        load_credentials(),
-        Arc::new(OpenRouterProvider::new()),
+        credentials.clone(),
+        Arc::new(OpenRouterProvider::new(credentials)),
     )
 }
 
@@ -50,8 +52,14 @@ pub fn run_with_backends(
         move || {
             let session_data = session.load().unwrap_or_default();
             let recent_paths = history.load().unwrap_or_default();
-            let has_api_key = credentials.secret(OPENROUTER_PROVIDER_ID).is_some();
+            let has_api_key = credentials
+                .resolved_secret(OPENROUTER_PROVIDER_ID)
+                .is_some();
             let screen = boot_screen(theme_mode, session_data, recent_paths, has_api_key);
+            let boot_task = match &screen {
+                ActiveScreen::Workspace(_) => start_models_fetch(credentials.clone()),
+                _ => Task::none(),
+            };
             (
                 ShellApp {
                     state: AppState::new(screen, theme_mode),
@@ -60,7 +68,7 @@ pub fn run_with_backends(
                     credentials: credentials.clone(),
                     ai: ai.clone(),
                 },
-                Task::none(),
+                boot_task,
             )
         },
         ShellApp::update,
@@ -111,10 +119,7 @@ impl ShellApp {
     }
 
     fn theme(&self) -> Theme {
-        match self.state.theme_mode {
-            ThemeMode::Dark => Theme::Dark,
-            ThemeMode::Light => Theme::Light,
-        }
+        iced_theme(self.state.theme_mode)
     }
 
     fn subscription(&self) -> Subscription<Msg> {
@@ -140,7 +145,13 @@ fn load_session() -> Arc<dyn WorkspaceSession> {
 }
 
 fn load_credentials() -> Arc<dyn WorkspaceCredentialStore> {
-    Arc::new(KeychainWorkspaceCredentialStore::new())
+    match PersistedWorkspaceCredentialStore::from_project_dirs() {
+        Ok(store) => Arc::new(store),
+        Err(error) => {
+            eprintln!("credential store unavailable, using in-memory fallback: {error}");
+            Arc::new(InMemoryWorkspaceCredentialStore::new())
+        }
+    }
 }
 
 /// In-memory session store for embedder tests.
