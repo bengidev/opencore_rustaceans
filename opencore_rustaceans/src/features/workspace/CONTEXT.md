@@ -1,28 +1,30 @@
 # Workspace context
 
-AI chat screen for an open project: streaming OpenRouter completions,
-API-key settings (iOS parity), session persistence, and close-project flow.
+Project shell for an open repo: OpenRouter model catalog, API-key settings,
+session persistence, close-project flow, and chat panel composition.
 
 ## Glossary
 
 | Term | Meaning |
 |------|---------|
-| **Workspace** | Chat screen bound to one open project path |
-| **Thread** | [`ChatThread`] — append-only user/assistant messages |
-| **Reducer** | `WorkspaceState::update` — pure message → state + outcome |
+| **Workspace** | Screen bound to one open project path |
+| **Chat** | [`crate::features::chat`] — thread, composer, streaming |
+| **Reducer** | `WorkspaceState::update` — delegates chat to `ChatState` |
 | **Outcome** | `WorkspaceOutcome` — routing hint for the app shell |
-| **Overlay** | API key settings or close-project confirmation modal |
+| **Overlay** | OpenRouter API key settings, model picker, or close-project confirmation |
+| **Model catalog** | Fetched from OpenRouter when an API key is stored |
 | **Session** | [`WorkspaceSession`] Strategy — JSON snapshot of open project + chat |
-| **Credential store** | [`WorkspaceCredentialStore`] Strategy — keyring or in-memory API keys |
+| **Credential store** | [`WorkspaceCredentialStore`] Strategy — keyring + file API keys |
 | **AI provider** | [`AiProvider`] Strategy — OpenRouter SSE streaming (default model `openai/gpt-4o-mini`) |
 
 ## Actions
 
 | Action | Behavior |
 |--------|----------|
-| Send message | Requires API key; streams assistant reply via OpenRouter |
-| Missing key hint | Opens API key settings overlay |
-| Configure actions | Opens API key settings (phase-1 stub for custom actions) |
+| Send message | Requires OpenRouter API key and loaded model; streams assistant reply |
+| Missing key hint | Opens OpenRouter API key overlay |
+| Model chip | Shows `Not Available` without key; fetches and lists OpenRouter models with key |
+| Configure OpenRouter | Opens API key settings overlay |
 | Close project | Confirms → clears session → returns to welcome |
 | Window close / Cmd+Q | App shell persists full workspace session |
 
@@ -32,16 +34,17 @@ Provider ID for API keys: `"openrouter"`.
 
 Callers outside the module import only from `features::workspace`:
 
-- `view` — embeddable chat view
+- `view` — workspace shell composing chat
 - `WorkspaceState`, `WorkspaceMessage`, `WorkspaceOutcome`
-- `ChatThread`, `ChatMessage`, `ChatRole`
+- `ChatThread`, `ChatMessage`, `ChatRole` (re-exported from `features::chat`)
 - `WorkspaceSession`, `FileWorkspaceSession`, `InMemoryWorkspaceSession`, `WorkspaceSessionData`
 - `WorkspaceCredentialStore`, `KeychainWorkspaceCredentialStore`, `InMemoryWorkspaceCredentialStore`
 - `AiProvider`, `OpenRouterProvider`, `CannedAiProvider`, `ChatRequest`, `ChatStreamEvent`
+- `fetch_openrouter_models`, `ModelOption`
 - `DEFAULT_MODEL`, `OPENROUTER_PROVIDER_ID`
 
 Routing and persistence side effects live in `app/` — not in this module.
 
 ## Branding
 
-Uses **OpenCore** naming and shared monochrome design tokens.
+OpenRouter provider logo and copy; shared monochrome design tokens throughout.

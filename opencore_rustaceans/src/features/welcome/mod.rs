@@ -70,12 +70,13 @@ pub fn run_with_history(
     theme_mode: crate::shared::design::ThemeMode,
     history: Arc<dyn WelcomeHistory>,
 ) -> iced::Result {
+    let credentials = crate::app::load_credentials_for_tests();
     crate::app::run_with_backends(
         theme_mode,
         history,
         crate::app::load_session_for_tests(),
-        crate::app::load_credentials_for_tests(),
-        std::sync::Arc::new(crate::features::workspace::OpenRouterProvider::new()),
+        credentials.clone(),
+        std::sync::Arc::new(crate::features::workspace::OpenRouterProvider::new(credentials)),
     )
 }
 
