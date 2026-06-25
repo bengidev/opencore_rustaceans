@@ -11,19 +11,27 @@ use iced::widget::{
 
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_tokens::{
-    ActionToken, BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
+    ActionToken, BackgroundToken, BorderToken, ForegroundToken, RadiusToken, SpacingToken, TypeRole,
 };
 
 use super::chat_brand;
 use super::chat_messages::ChatEvent;
 use super::chat_model::{ChatMessage, ChatRole};
 use super::chat_state::ChatState;
-use super::chat_style::{control_radius, icon_button_style, text_input_style};
+use super::chat_style::{
+    chip_button_style, composer_input_style, control_radius, icon_button_style, surface_radius,
+};
 
 const LOGO_BOX: f32 = 72.0;
 const LOGO_IMAGE: f32 = 56.0;
-const ICON_BUTTON: f32 = 32.0;
+const ICON_BUTTON: f32 = 28.0;
+const CHIP_GLYPH_BOX: f32 = 16.0;
+const ICON_GLYPH_SIZE: f32 = 14.0;
+const CHIP_GLYPH_SIZE: f32 = 12.0;
 const BUBBLE_MAX_WIDTH: f32 = 520.0;
+const TOKEN_BAR_WIDTH: f32 = 112.0;
+const TOKEN_BUDGET: u32 = 128_000;
+const STATUS_DOT: f32 = 6.0;
 
 /// Render the chat body — empty state or message thread.
 pub fn body(state: &ChatState, theme: OpenCoreTheme) -> Element<'_, ChatEvent> {
@@ -45,23 +53,89 @@ pub fn composer<'a>(
     theme: OpenCoreTheme,
     has_api_key: bool,
     models_loading: bool,
-    footer_leading: Element<'a, ChatEvent>,
+    model_chip: Element<'a, ChatEvent>,
+    selected_directory: &'a str,
 ) -> Element<'a, ChatEvent> {
     let can_send = composer_can_send(state, has_api_key, models_loading);
 
-    let mut composer_column = column![].spacing(SpacingToken::S3.value());
+    let mut composer_column = column![].spacing(SpacingToken::Hairline.value());
 
     if !has_api_key {
         composer_column = composer_column.push(api_key_hint(theme));
     }
 
-    let input = text_input("Type a message…", &state.draft)
-        .on_input(ChatEvent::DraftChanged)
-        .padding(SpacingToken::S3.value())
-        .size(TypeRole::BodyMd.size())
-        .style(move |_t: &Theme, status: InputStatus| text_input_style(theme, status));
+    composer_column = composer_column
+        .push(config_toolbar(
+            theme,
+            model_chip,
+            selected_directory,
+            estimated_tokens(state),
+        ))
+        .push(composer_card(state, theme, can_send));
 
-    let attach = icon_button(theme, "+", IconButtonKind::Ghost, None);
+    composer_column.width(Length::Fill).into()
+}
+
+fn config_toolbar<'a>(
+    theme: OpenCoreTheme,
+    model_chip: Element<'a, ChatEvent>,
+    selected_directory: &'a str,
+    token_count: u32,
+) -> Element<'a, ChatEvent> {
+    let selectors = row![
+        model_chip,
+        mock_pill(theme, true, "□", "Sandbox", false),
+        mock_pill(theme, false, "▤", "Folder", true),
+    ]
+    .spacing(SpacingToken::S2.value())
+    .align_y(Vertical::Center);
+
+    let directory = row![
+        text("⌗")
+            .size(TypeRole::LabelMd.size())
+            .style(move |_t: &Theme| text::Style {
+                color: Some(theme.foreground(ForegroundToken::Muted)),
+            }),
+        text(selected_directory)
+            .size(TypeRole::LabelMd.size())
+            .style(move |_t: &Theme| text::Style {
+                color: Some(theme.foreground(ForegroundToken::Secondary)),
+            }),
+    ]
+    .spacing(SpacingToken::S1.value())
+    .align_y(Vertical::Center);
+
+    let token_meter = column![token_meter_bar(theme, token_count), token_meter_label(theme, token_count)]
+        .spacing(SpacingToken::S1.value())
+        .align_x(Horizontal::Right);
+
+    let trailing = column![directory, token_meter]
+        .spacing(SpacingToken::S1.value())
+        .align_x(Horizontal::Right);
+
+    row![selectors, Space::new().width(Length::Fill), trailing]
+        .align_y(Vertical::Top)
+        .width(Length::Fill)
+        .into()
+}
+
+fn composer_card(state: &ChatState, theme: OpenCoreTheme, can_send: bool) -> Element<'_, ChatEvent> {
+    let input = text_input("Message or attach files…", &state.draft)
+        .on_input(ChatEvent::DraftChanged)
+        .padding([SpacingToken::S3.value(), SpacingToken::S4.value()])
+        .size(TypeRole::BodyMd.size())
+        .style(move |_t: &Theme, status: InputStatus| composer_input_style(theme, status));
+
+    let attach = icon_button(theme, "⌁", IconButtonKind::Ghost, None);
+    let commands = icon_button(theme, "/", IconButtonKind::Ghost, None);
+    let voice = icon_button(theme, "◌", IconButtonKind::Ghost, None);
+
+    let send_hint = text("↵ to send")
+        .size(TypeRole::LabelMd.size())
+        .style(move |_t: &Theme| text::Style {
+            color: Some(theme.foreground(ForegroundToken::Muted)),
+        });
+
     let send = icon_button(
         theme,
         "↑",
@@ -73,21 +147,21 @@ pub fn composer<'a>(
         can_send.then_some(ChatEvent::SendPressed),
     );
 
-    let controls = row![
-        footer_leading,
-        Space::new().width(Length::Fill),
+    let action_bar = row![
         attach,
-        send
+        commands,
+        voice,
+        Space::new().width(Length::Fill),
+        send_hint,
+        send,
     ]
     .align_y(Vertical::Center)
     .spacing(SpacingToken::S2.value())
-    .width(Length::Fill);
+    .width(Length::Fill)
+    .padding([SpacingToken::S2.value(), SpacingToken::S4.value()]);
 
-    composer_column = composer_column.push(input).push(controls);
-
-    container(composer_column)
+    container(column![input, action_bar].width(Length::Fill))
         .width(Length::Fill)
-        .padding(SpacingToken::S4.value())
         .style(move |_t: &Theme| container::Style {
             background: Some(iced::Background::Color(
                 theme.background(BackgroundToken::Elevated),
@@ -95,11 +169,148 @@ pub fn composer<'a>(
             border: iced::Border {
                 color: theme.border(BorderToken::Default),
                 width: 1.0,
-                radius: control_radius(),
+                radius: surface_radius(),
             },
             ..Default::default()
         })
         .into()
+}
+
+fn mock_pill(
+    theme: OpenCoreTheme,
+    active: bool,
+    icon: &'static str,
+    label: &'static str,
+    show_chevron: bool,
+) -> Element<'static, ChatEvent> {
+    let text_color = theme.foreground(ForegroundToken::Secondary);
+    let icon_color = theme.foreground(ForegroundToken::Muted);
+
+    let mut content = row![status_dot(theme, active)]
+        .spacing(SpacingToken::S1.value())
+        .align_y(Vertical::Center);
+
+    content = content
+        .push(centered_glyph(icon, icon_color, CHIP_GLYPH_BOX, CHIP_GLYPH_SIZE))
+        .push(
+            text(label)
+                .size(TypeRole::LabelMd.size())
+                .style(move |_t: &Theme| text::Style {
+                    color: Some(text_color),
+                }),
+        );
+
+    if show_chevron {
+        content = content.push(centered_glyph(
+            "⌄",
+            theme.foreground(ForegroundToken::Muted),
+            CHIP_GLYPH_BOX,
+            CHIP_GLYPH_SIZE,
+        ));
+    }
+
+    button(
+        container(content)
+            .padding([SpacingToken::S1.value(), SpacingToken::S3.value()])
+            .align_y(Vertical::Center)
+            .align_x(Horizontal::Left),
+    )
+    .padding(0)
+    .on_press(ChatEvent::Noop)
+    .style(move |_t: &Theme, status| chip_button_style(theme, status))
+    .into()
+}
+
+fn status_dot(theme: OpenCoreTheme, active: bool) -> Element<'static, ChatEvent> {
+    let color = if active {
+        theme.foreground(ForegroundToken::Primary)
+    } else {
+        theme.foreground(ForegroundToken::Muted)
+    };
+
+    container(Space::new())
+        .width(Length::Fixed(STATUS_DOT))
+        .height(Length::Fixed(STATUS_DOT))
+        .style(move |_t: &Theme| container::Style {
+            background: Some(iced::Background::Color(color)),
+            border: iced::Border {
+                radius: control_radius(),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .into()
+}
+
+fn token_meter_bar(theme: OpenCoreTheme, used: u32) -> Element<'static, ChatEvent> {
+    let ratio = (used as f32 / TOKEN_BUDGET as f32).clamp(0.02, 1.0);
+    let filled = TOKEN_BAR_WIDTH * ratio;
+
+    let fill = container(Space::new())
+        .width(Length::Fixed(filled))
+        .height(Length::Fixed(3.0))
+        .style(move |_t: &Theme| container::Style {
+            background: Some(iced::Background::Color(
+                theme.foreground(ForegroundToken::Secondary),
+            )),
+            border: iced::Border {
+                radius: RadiusToken::Xs.value().into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+
+    container(fill)
+        .width(Length::Fixed(TOKEN_BAR_WIDTH))
+        .height(Length::Fixed(3.0))
+        .align_x(Horizontal::Left)
+        .style(move |_t: &Theme| container::Style {
+            background: Some(iced::Background::Color(
+                theme.background(BackgroundToken::Tertiary),
+            )),
+            border: iced::Border {
+                radius: RadiusToken::Xs.value().into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .into()
+}
+
+fn token_meter_label(theme: OpenCoreTheme, used: u32) -> Element<'static, ChatEvent> {
+    let label = format!(
+        "{} / {} tokens",
+        format_token_count(used),
+        format_token_count(TOKEN_BUDGET)
+    );
+
+    text(label)
+        .size(TypeRole::MonoSm.size())
+        .style(move |_t: &Theme| text::Style {
+            color: Some(theme.foreground(ForegroundToken::Muted)),
+        })
+        .into()
+}
+
+fn format_token_count(count: u32) -> String {
+    if count >= 10_000 {
+        format!("{:.0}k", count as f32 / 1000.0)
+    } else if count >= 1_000 {
+        format!("{:.1}k", count as f32 / 1000.0)
+    } else {
+        format!("~{count}")
+    }
+}
+
+fn estimated_tokens(state: &ChatState) -> u32 {
+    let chars: usize = state
+        .thread
+        .messages()
+        .iter()
+        .map(|message| message.content.len())
+        .sum::<usize>()
+        + state.draft.len();
+    ((chars as u32) / 4).max(1)
 }
 
 fn empty_state(theme: OpenCoreTheme) -> Element<'static, ChatEvent> {
@@ -311,13 +522,7 @@ fn icon_button(
         ),
     };
 
-    let content = container(text(label).size(16.0).style(move |_t: &Theme| text::Style {
-        color: Some(text_color),
-    }))
-    .width(Length::Fill)
-    .height(Length::Fill)
-    .align_x(Horizontal::Center)
-    .align_y(Vertical::Center);
+    let content = centered_glyph(label, text_color, ICON_BUTTON, ICON_GLYPH_SIZE);
 
     let mut control = button(content)
         .padding(0)
@@ -339,6 +544,24 @@ fn icon_button(
     }
 
     control.into()
+}
+
+fn centered_glyph(
+    label: &'static str,
+    color: iced::Color,
+    box_size: f32,
+    font_size: f32,
+) -> Element<'static, ChatEvent> {
+    container(
+        text(label)
+            .size(font_size)
+            .style(move |_t: &Theme| text::Style { color: Some(color) }),
+    )
+    .width(Length::Fixed(box_size))
+    .height(Length::Fixed(box_size))
+    .align_x(Horizontal::Center)
+    .align_y(Vertical::Center)
+    .into()
 }
 
 fn composer_can_send(state: &ChatState, has_api_key: bool, models_loading: bool) -> bool {
