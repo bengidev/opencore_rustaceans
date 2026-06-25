@@ -7,10 +7,12 @@
 //! spacing/radius scales, typography roles, and a theme struct that
 //! resolves tokens to concrete values per mode.
 
+pub mod design_iced_theme;
 pub mod design_palette;
 pub mod design_theme;
 pub mod design_tokens;
 
+pub use design_iced_theme::iced_theme;
 pub use design_theme::{OpenCoreTheme, ThemeMode};
 pub use design_tokens::{
     AccentToken, ActionToken, BackgroundToken, BorderToken, ForegroundToken, RadiusToken,

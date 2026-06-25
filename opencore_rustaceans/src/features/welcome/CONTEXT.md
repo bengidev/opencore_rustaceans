@@ -29,7 +29,7 @@ update persisted recent-project history.
 | Open Command Palette | Double-shift or row press → searchable command list |
 | Recent project | Validates stored path → history bump → `WorkspaceOpened` outcome |
 
-`WorkspaceOpened` is the composition-root hook for a future workspace shell; the welcome screen shows a status banner until that host exists.
+`WorkspaceOpened` is the composition-root hook for the workspace shell; the app shell routes to `features::workspace` when a project is opened.
 
 Keyboard: `⌘N`, `⌘O`, `⌘1`–`⌘5`, double `⇧`, `Esc` dismisses overlays.
 

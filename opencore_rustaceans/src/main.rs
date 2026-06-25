@@ -1,17 +1,18 @@
 //! OpenCore Rustaceans — composition root.
 //!
-//! Boots onboarding on first run when needed, then the welcome home screen.
+//! Boots onboarding on first run when needed, then the app shell.
 
+mod app;
 mod features;
 mod shared;
 
 use std::sync::Arc;
 
+use app::run as run_app;
 use features::onboarding::{
     FileOnboardingPersistence, InMemoryOnboardingPersistence, OnboardingPersistence,
     run as run_onboarding, should_run,
 };
-use features::welcome::run as run_welcome;
 use shared::design::ThemeMode;
 
 fn main() -> iced::Result {
@@ -19,7 +20,7 @@ fn main() -> iced::Result {
     if should_run(persistence.as_ref()) {
         run_onboarding(persistence, ThemeMode::Dark)?;
     }
-    run_welcome(ThemeMode::Dark)
+    run_app(ThemeMode::Dark)
 }
 
 fn load_persistence() -> Arc<dyn OnboardingPersistence> {

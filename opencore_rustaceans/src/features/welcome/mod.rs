@@ -49,45 +49,37 @@ pub use welcome_outcome::WelcomeOutcome;
 pub use welcome_state::WelcomeState;
 pub use welcome_view::view;
 
+pub use welcome_actions::{clone_destination, create_empty_file, default_clone_parent, git_clone};
+
 use std::sync::Arc;
 
+use iced::Subscription;
 use iced::keyboard::{self, Modifiers, key};
-use iced::{Element, Subscription, Task, Theme};
 
-use welcome_actions::{clone_destination, create_empty_file, default_clone_parent, git_clone};
 use welcome_messages::WelcomeMessage as Msg;
-use welcome_outcome::WelcomeOutcome as Outcome;
 
 /// Launch the welcome Iced application.
+#[allow(dead_code)]
 pub fn run(theme_mode: crate::shared::design::ThemeMode) -> iced::Result {
-    run_with_history(theme_mode, load_history())
+    crate::app::run(theme_mode)
 }
 
 /// Launch welcome with an explicit history backend (tests / embedders).
+#[allow(dead_code)]
 pub fn run_with_history(
     theme_mode: crate::shared::design::ThemeMode,
     history: Arc<dyn WelcomeHistory>,
 ) -> iced::Result {
-    iced::application(
-        move || {
-            let recent_paths = history.load().unwrap_or_default();
-            let state = WelcomeState::with_recent_paths(theme_mode, recent_paths);
-            (
-                WelcomeApp {
-                    state,
-                    history: history.clone(),
-                },
-                Task::none(),
-            )
-        },
-        WelcomeApp::update,
-        WelcomeApp::view,
+    let credentials = crate::app::load_credentials_for_tests();
+    crate::app::run_with_backends(
+        theme_mode,
+        history,
+        crate::app::load_session_for_tests(),
+        credentials.clone(),
+        std::sync::Arc::new(crate::features::workspace::OpenRouterProvider::new(
+            credentials,
+        )),
     )
-    .title(WelcomeApp::title)
-    .theme(WelcomeApp::theme)
-    .subscription(|_app| subscription())
-    .window_size(iced::Size::new(720.0, 640.0))
-    .run()
 }
 
 /// Keyboard shortcuts for embeddable welcome hosts.
@@ -104,99 +96,6 @@ pub fn subscription() -> Subscription<Msg> {
         keyboard::Event::KeyPressed { key, modifiers, .. } => shortcut_message(key, modifiers),
         _ => None,
     })
-}
-
-fn load_history() -> Arc<dyn WelcomeHistory> {
-    match FileWelcomeHistory::from_project_dirs() {
-        Ok(store) => Arc::new(store),
-        Err(_) => Arc::new(InMemoryWelcomeHistory::new()),
-    }
-}
-
-/// Iced application wrapper for the welcome screen.
-pub struct WelcomeApp {
-    state: WelcomeState,
-    history: Arc<dyn WelcomeHistory>,
-}
-
-impl WelcomeApp {
-    fn update(&mut self, message: Msg) -> Task<Msg> {
-        if let Msg::NewFileDialogCompleted(Some(path)) = message {
-            let result = create_empty_file(&path).map(|()| path);
-            return Task::done(Msg::NewFileResult(result));
-        }
-
-        let outcome = self.state.update(message);
-        self.persist_history();
-
-        match outcome {
-            Outcome::ActionRequested(WelcomeItemId::NewFile) => WelcomeApp::pick_new_file(),
-            Outcome::ActionRequested(WelcomeItemId::OpenProject) => WelcomeApp::pick_open_project(),
-            Outcome::CloneRequested(url) => WelcomeApp::start_clone(url),
-            Outcome::WorkspaceOpened(_) => Task::none(),
-            _ => Task::none(),
-        }
-    }
-
-    fn persist_history(&self) {
-        if let Err(error) = self.history.save(&self.state.recent_paths) {
-            eprintln!("failed to persist welcome history: {error}");
-        }
-    }
-
-    fn pick_new_file() -> Task<Msg> {
-        Task::perform(
-            async {
-                rfd::AsyncFileDialog::new()
-                    .set_title("Create New File")
-                    .save_file()
-                    .await
-                    .map(|handle| handle.path().to_path_buf())
-            },
-            Msg::NewFileDialogCompleted,
-        )
-    }
-
-    fn pick_open_project() -> Task<Msg> {
-        Task::perform(
-            async {
-                rfd::AsyncFileDialog::new()
-                    .set_title("Open Project")
-                    .pick_folder()
-                    .await
-                    .map(|handle| handle.path().to_path_buf())
-            },
-            Msg::OpenProjectDialogCompleted,
-        )
-    }
-
-    fn start_clone(url: String) -> Task<Msg> {
-        Task::perform(
-            async move {
-                let parent = default_clone_parent();
-                let destination = clone_destination(&parent, &url).ok_or_else(|| {
-                    String::from("could not derive a repository name from the URL")
-                })?;
-                git_clone(&url, &destination).map(|()| destination)
-            },
-            Msg::CloneCompleted,
-        )
-    }
-
-    fn view(&self) -> Element<'_, Msg> {
-        view(&self.state)
-    }
-
-    fn title(&self) -> String {
-        String::from("OpenCore")
-    }
-
-    fn theme(&self) -> Theme {
-        match self.state.theme_mode {
-            crate::shared::design::ThemeMode::Dark => Theme::Dark,
-            crate::shared::design::ThemeMode::Light => Theme::Light,
-        }
-    }
 }
 
 fn shortcut_message(key: keyboard::Key, mods: Modifiers) -> Option<Msg> {
