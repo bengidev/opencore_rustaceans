@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-iced = { version = "0.14", features = ["canvas", "tokio"] }
+iced = { version = "0.14", features = ["canvas", "image", "tokio"] }
 thiserror = "2.0"
 directories = "6.0"
 rfd = { version = "0.15", features = ["async-std"] }
