@@ -4,7 +4,7 @@ use std::pin::Pin;
 
 use futures_util::Stream;
 
-use super::workspace_model::ChatMessage;
+use crate::features::chat::ChatMessage;
 
 pub const DEFAULT_MODEL: &str = "openai/gpt-4o-mini";
 pub const OPENROUTER_PROVIDER_ID: &str = "openrouter";
@@ -68,7 +68,7 @@ impl AiProvider for CannedAiProvider {
 
 #[cfg(test)]
 mod tests {
-    use super::super::workspace_model::{ChatMessage, ChatRole};
+    use crate::features::chat::{ChatMessage, ChatRole};
     use super::*;
     use std::task::{Context, Poll};
 
