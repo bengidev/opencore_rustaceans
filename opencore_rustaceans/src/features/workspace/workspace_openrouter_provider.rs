@@ -7,8 +7,8 @@ use futures_util::{Stream, StreamExt};
 use reqwest::Client;
 
 use super::workspace_ai_provider::{
-    AiError, AiProvider, ChatRequest, ChatStreamEvent, OPENROUTER_PROVIDER_ID,
-    format_http_error, openrouter_http_client,
+    AiError, AiProvider, ChatRequest, ChatStreamEvent, OPENROUTER_PROVIDER_ID, format_http_error,
+    openrouter_http_client,
 };
 use super::workspace_credential_store::WorkspaceCredentialStore;
 use super::workspace_sse::parse_sse_chunk;
@@ -235,8 +235,8 @@ enum StreamState {
 #[cfg(test)]
 mod tests {
     use super::super::workspace_memory_credential::InMemoryWorkspaceCredentialStore;
-    use crate::features::chat::ChatMessage;
     use super::*;
+    use crate::features::chat::ChatMessage;
 
     #[test]
     fn build_body_includes_stream_flag_and_messages() {

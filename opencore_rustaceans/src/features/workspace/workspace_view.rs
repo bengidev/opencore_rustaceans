@@ -6,7 +6,7 @@ use iced::Theme;
 use iced::alignment::Vertical;
 use iced::widget::{Space, button, column, container, row, stack, text};
 
-use crate::features::chat::{body, chip_button_style, composer, ChatEvent};
+use crate::features::chat::{ChatEvent, body, chip_button_style, composer};
 use crate::shared::design::design_tokens::{
     BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
 };
@@ -49,13 +49,11 @@ pub fn view(state: &WorkspaceState) -> Element<'_, WorkspaceMessage> {
                     color: Some(theme.foreground(ForegroundToken::Secondary)),
                 }),
             Space::new().width(Length::Fill),
-            button(
-                text("Close Project")
-                    .size(TypeRole::LabelMd.size())
-                    .style(move |_t: &Theme| text::Style {
-                        color: Some(theme.foreground(ForegroundToken::Primary)),
-                    }),
-            )
+            button(text("Close Project").size(TypeRole::LabelMd.size()).style(
+                move |_t: &Theme| text::Style {
+                    color: Some(theme.foreground(ForegroundToken::Primary)),
+                }
+            ),)
             .on_press(WorkspaceMessage::CloseProjectRequested)
             .padding([SpacingToken::S2.value(), SpacingToken::S3.value()])
             .style(move |_t: &Theme, status| chip_button_style(theme, status)),

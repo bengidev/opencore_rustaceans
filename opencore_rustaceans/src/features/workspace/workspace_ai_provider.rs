@@ -107,8 +107,8 @@ impl AiProvider for CannedAiProvider {
 
 #[cfg(test)]
 mod tests {
-    use crate::features::chat::{ChatMessage, ChatRole};
     use super::*;
+    use crate::features::chat::{ChatMessage, ChatRole};
     use std::task::{Context, Poll};
 
     fn collect_events(

@@ -73,8 +73,8 @@ fn restrict_session_file_permissions(_path: &Path) {}
 
 #[cfg(test)]
 mod tests {
-    use crate::features::chat::{ChatMessage, ChatRole};
     use super::*;
+    use crate::features::chat::{ChatMessage, ChatRole};
 
     #[test]
     fn starts_empty() {

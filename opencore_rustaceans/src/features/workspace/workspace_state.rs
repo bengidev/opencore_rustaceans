@@ -65,12 +65,7 @@ impl WorkspaceState {
         )
     }
 
-    fn base(
-        project_path: PathBuf,
-        theme_mode: ThemeMode,
-        chat: ChatState,
-        model: String,
-    ) -> Self {
+    fn base(project_path: PathBuf, theme_mode: ThemeMode, chat: ChatState, model: String) -> Self {
         Self {
             project_path,
             chat,

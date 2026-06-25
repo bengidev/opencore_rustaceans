@@ -18,10 +18,9 @@ pub struct FileWorkspaceCredentialStore {
 
 impl FileWorkspaceCredentialStore {
     pub fn from_project_dirs() -> Result<Self, CredentialError> {
-        let proj_dirs =
-            ProjectDirs::from("com", "opencore", "opencore").ok_or(CredentialError::Store(
-                String::from("no application data directory"),
-            ))?;
+        let proj_dirs = ProjectDirs::from("com", "opencore", "opencore").ok_or(
+            CredentialError::Store(String::from("no application data directory")),
+        )?;
         Ok(Self::new_at(proj_dirs.data_dir()))
     }
 
@@ -56,8 +55,8 @@ impl WorkspaceCredentialStore for FileWorkspaceCredentialStore {
         fs::create_dir_all(&self.credentials_dir)
             .map_err(|error| CredentialError::Store(error.to_string()))?;
         let path = self.secret_path(provider_id);
-        let mut file = fs::File::create(&path)
-            .map_err(|error| CredentialError::Store(error.to_string()))?;
+        let mut file =
+            fs::File::create(&path).map_err(|error| CredentialError::Store(error.to_string()))?;
         file.write_all(secret.as_bytes())
             .map_err(|error| CredentialError::Store(error.to_string()))?;
         restrict_permissions(&path);

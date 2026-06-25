@@ -34,10 +34,7 @@ pub fn workspace_message_from(event: ChatEvent) -> WorkspaceMessage {
     }
 }
 
-pub fn workspace_outcome_from(
-    outcome: ChatOutcome,
-    model: &str,
-) -> WorkspaceOutcome {
+pub fn workspace_outcome_from(outcome: ChatOutcome, model: &str) -> WorkspaceOutcome {
     match outcome {
         ChatOutcome::None => WorkspaceOutcome::None,
         ChatOutcome::SessionChanged => WorkspaceOutcome::SessionChanged,

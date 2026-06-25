@@ -12,8 +12,8 @@ use crate::features::welcome::{
 };
 use crate::features::workspace::{
     AiProvider, ChatRequest, ChatStreamEvent, OPENROUTER_PROVIDER_ID, WorkspaceCredentialStore,
-    WorkspaceMessage, WorkspaceSession, WorkspaceSessionData, WorkspaceState, fetch_openrouter_models,
-    sanitize_user_error,
+    WorkspaceMessage, WorkspaceSession, WorkspaceSessionData, WorkspaceState,
+    fetch_openrouter_models, sanitize_user_error,
 };
 
 use super::app_messages::ShellMessage;
@@ -233,14 +233,10 @@ fn handle_welcome_outcome(
     }
 }
 
-pub fn start_models_fetch(
-    credentials: Arc<dyn WorkspaceCredentialStore>,
-) -> Task<ShellMessage> {
+pub fn start_models_fetch(credentials: Arc<dyn WorkspaceCredentialStore>) -> Task<ShellMessage> {
     let api_key = credentials.resolved_secret(OPENROUTER_PROVIDER_ID);
     Task::batch([
-        Task::done(ShellMessage::Workspace(
-            WorkspaceMessage::ModelsLoadStarted,
-        )),
+        Task::done(ShellMessage::Workspace(WorkspaceMessage::ModelsLoadStarted)),
         Task::perform(
             async move { fetch_openrouter_models(api_key.as_deref()).await },
             |result| match result {
@@ -264,9 +260,9 @@ pub fn start_ai_stream(request: ChatRequest, ai: Arc<dyn AiProvider>) -> Task<Sh
                 ShellMessage::Workspace(WorkspaceMessage::StreamDelta(content))
             }
             Ok(ChatStreamEvent::Done) => ShellMessage::Workspace(WorkspaceMessage::StreamCompleted),
-            Ok(ChatStreamEvent::Error(error)) => ShellMessage::Workspace(
-                WorkspaceMessage::StreamFailed(sanitize_user_error(&error)),
-            ),
+            Ok(ChatStreamEvent::Error(error)) => {
+                ShellMessage::Workspace(WorkspaceMessage::StreamFailed(sanitize_user_error(&error)))
+            }
             Err(error) => ShellMessage::Workspace(WorkspaceMessage::StreamFailed(
                 sanitize_user_error(&error.to_string()),
             )),
@@ -398,7 +394,11 @@ mod tests {
 
         let workspace = state.workspace().unwrap();
         assert!(!workspace.has_api_key);
-        assert!(credentials.resolved_secret(OPENROUTER_PROVIDER_ID).is_none());
+        assert!(
+            credentials
+                .resolved_secret(OPENROUTER_PROVIDER_ID)
+                .is_none()
+        );
     }
 
     #[test]

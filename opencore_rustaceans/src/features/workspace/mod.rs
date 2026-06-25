@@ -39,17 +39,20 @@ mod workspace_file_session;
 mod workspace_keychain_store;
 mod workspace_memory_credential;
 mod workspace_memory_session;
-mod workspace_persisted_credential_store;
 mod workspace_messages;
 mod workspace_openrouter_catalog;
 mod workspace_openrouter_provider;
 mod workspace_outcome;
 mod workspace_overlay;
+mod workspace_persisted_credential_store;
 mod workspace_session;
 mod workspace_sse;
 mod workspace_state;
 mod workspace_view;
 
+pub use crate::features::chat::ChatThread;
+#[allow(unused_imports)]
+pub use crate::features::chat::{ChatMessage, ChatRole};
 #[allow(unused_imports)]
 pub use workspace_ai_provider::{
     AiError, AiProvider, CannedAiProvider, ChatRequest, ChatStreamEvent, DEFAULT_MODEL,
@@ -60,17 +63,14 @@ pub use workspace_credential_store::{CredentialError, WorkspaceCredentialStore};
 pub use workspace_file_session::FileWorkspaceSession;
 pub use workspace_memory_credential::InMemoryWorkspaceCredentialStore;
 pub use workspace_memory_session::InMemoryWorkspaceSession;
-pub use workspace_persisted_credential_store::PersistedWorkspaceCredentialStore;
 pub use workspace_messages::WorkspaceMessage;
-pub use crate::features::chat::ChatThread;
-#[allow(unused_imports)]
-pub use crate::features::chat::{ChatMessage, ChatRole};
 #[allow(unused_imports)]
 pub use workspace_openrouter_catalog::{ModelOption, fetch_openrouter_models};
 pub use workspace_openrouter_provider::OpenRouterProvider;
 pub use workspace_outcome::WorkspaceOutcome;
 #[allow(unused_imports)]
 pub use workspace_overlay::WorkspaceOverlay;
+pub use workspace_persisted_credential_store::PersistedWorkspaceCredentialStore;
 #[allow(unused_imports)]
 pub use workspace_session::{SessionError, WorkspaceSession, WorkspaceSessionData};
 pub use workspace_state::WorkspaceState;

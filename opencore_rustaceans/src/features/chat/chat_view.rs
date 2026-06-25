@@ -4,10 +4,10 @@ use iced::Element;
 use iced::Length;
 use iced::Theme;
 use iced::alignment::{Horizontal, Vertical};
+use iced::widget::text_input::Status as InputStatus;
 use iced::widget::{
     MouseArea, Space, button, column, container, image, row, scrollable, text, text_input,
 };
-use iced::widget::text_input::Status as InputStatus;
 
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_tokens::{
@@ -73,10 +73,15 @@ pub fn composer<'a>(
         can_send.then_some(ChatEvent::SendPressed),
     );
 
-    let controls = row![footer_leading, Space::new().width(Length::Fill), attach, send]
-        .align_y(Vertical::Center)
-        .spacing(SpacingToken::S2.value())
-        .width(Length::Fill);
+    let controls = row![
+        footer_leading,
+        Space::new().width(Length::Fill),
+        attach,
+        send
+    ]
+    .align_y(Vertical::Center)
+    .spacing(SpacingToken::S2.value())
+    .width(Length::Fill);
 
     composer_column = composer_column.push(input).push(controls);
 
@@ -306,13 +311,9 @@ fn icon_button(
         ),
     };
 
-    let content = container(
-        text(label)
-            .size(16.0)
-            .style(move |_t: &Theme| text::Style {
-                color: Some(text_color),
-            }),
-    )
+    let content = container(text(label).size(16.0).style(move |_t: &Theme| text::Style {
+        color: Some(text_color),
+    }))
     .width(Length::Fill)
     .height(Length::Fill)
     .align_x(Horizontal::Center)

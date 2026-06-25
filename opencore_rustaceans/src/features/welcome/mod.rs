@@ -76,7 +76,9 @@ pub fn run_with_history(
         history,
         crate::app::load_session_for_tests(),
         credentials.clone(),
-        std::sync::Arc::new(crate::features::workspace::OpenRouterProvider::new(credentials)),
+        std::sync::Arc::new(crate::features::workspace::OpenRouterProvider::new(
+            credentials,
+        )),
     )
 }
 

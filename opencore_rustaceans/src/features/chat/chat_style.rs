@@ -1,7 +1,7 @@
 //! Shared chat control styling.
 
-use iced::widget::{button, text_input};
 use iced::widget::text_input::Status as InputStatus;
+use iced::widget::{button, text_input};
 
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_tokens::{

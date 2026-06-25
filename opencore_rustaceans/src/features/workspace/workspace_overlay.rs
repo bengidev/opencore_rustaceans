@@ -10,13 +10,14 @@ use iced::widget::{
 
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_tokens::{
-    BackgroundToken, BorderToken, ForegroundToken, SpacingToken,
-    TypeRole,
+    BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
 };
 
 use super::workspace_messages::WorkspaceMessage;
 use super::workspace_state::WorkspaceState;
-use crate::features::chat::{chip_button_style, control_radius, primary_button_style, text_input_style};
+use crate::features::chat::{
+    chip_button_style, control_radius, primary_button_style, text_input_style,
+};
 
 /// Active overlay on the workspace screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -117,13 +118,11 @@ fn api_key_settings_panel(
 
     let mut fields = column![title, hint, field].spacing(SpacingToken::S4.value());
     if let Some(status) = &state.api_key_status {
-        fields = fields.push(
-            text(status.clone())
-                .size(TypeRole::LabelMd.size())
-                .style(move |_t: &Theme| text::Style {
-                    color: Some(theme.foreground(ForegroundToken::Secondary)),
-                }),
-        );
+        fields = fields.push(text(status.clone()).size(TypeRole::LabelMd.size()).style(
+            move |_t: &Theme| text::Style {
+                color: Some(theme.foreground(ForegroundToken::Secondary)),
+            },
+        ));
     }
 
     let save = button(text("Save").size(TypeRole::LabelMd.size()))
@@ -200,22 +199,21 @@ fn model_picker_panel(
                 .style(move |_t: &Theme| text::Style {
                     color: Some(theme.foreground(ForegroundToken::Primary)),
                 });
-            let id = text(option.id.clone())
-                .size(TypeRole::MonoXs.size())
-                .style(move |_t: &Theme| text::Style {
-                    color: Some(theme.foreground(ForegroundToken::Muted)),
-                });
+            let id =
+                text(option.id.clone())
+                    .size(TypeRole::MonoXs.size())
+                    .style(move |_t: &Theme| text::Style {
+                        color: Some(theme.foreground(ForegroundToken::Muted)),
+                    });
             let row_content = row![
                 column![name, id].spacing(SpacingToken::S1.value()),
                 Space::new().width(Length::Fill),
                 if selected {
-                    Element::from(
-                        text("✓")
-                            .size(TypeRole::LabelMd.size())
-                            .style(move |_t: &Theme| text::Style {
-                                color: Some(theme.foreground(ForegroundToken::Secondary)),
-                            }),
-                    )
+                    Element::from(text("✓").size(TypeRole::LabelMd.size()).style(
+                        move |_t: &Theme| text::Style {
+                            color: Some(theme.foreground(ForegroundToken::Secondary)),
+                        },
+                    ))
                 } else {
                     Space::new().width(Length::Fixed(12.0)).into()
                 },
@@ -228,9 +226,7 @@ fn model_picker_panel(
                     .width(Length::Fill)
                     .padding([SpacingToken::S2.value(), SpacingToken::S3.value()])
                     .on_press(WorkspaceMessage::ModelPickerSelect(index))
-                    .style(move |_t: &Theme, status| {
-                        model_row_style(theme, selected, status)
-                    }),
+                    .style(move |_t: &Theme, status| model_row_style(theme, selected, status)),
             );
         }
     }
@@ -326,11 +322,7 @@ fn scrim_color(theme: OpenCoreTheme) -> iced::Color {
     with_alpha(theme.background(BackgroundToken::Primary), 0.72)
 }
 
-fn model_row_style(
-    theme: OpenCoreTheme,
-    selected: bool,
-    status: button::Status,
-) -> button::Style {
+fn model_row_style(theme: OpenCoreTheme, selected: bool, status: button::Status) -> button::Style {
     let background = if selected {
         theme.background(BackgroundToken::Secondary)
     } else {
