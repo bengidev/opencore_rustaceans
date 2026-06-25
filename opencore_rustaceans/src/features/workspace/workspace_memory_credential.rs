@@ -45,13 +45,20 @@ mod tests {
     #[test]
     fn save_load_clear_round_trip() {
         let store = InMemoryWorkspaceCredentialStore::new();
-        assert!(store.secret(OPENROUTER_PROVIDER_ID).is_none());
+        assert!(store.resolved_secret(OPENROUTER_PROVIDER_ID).is_none());
         store.save("secret-key", OPENROUTER_PROVIDER_ID).unwrap();
         assert_eq!(
-            store.secret(OPENROUTER_PROVIDER_ID),
+            store.resolved_secret(OPENROUTER_PROVIDER_ID),
             Some(String::from("secret-key"))
         );
         store.clear(OPENROUTER_PROVIDER_ID).unwrap();
-        assert!(store.secret(OPENROUTER_PROVIDER_ID).is_none());
+        assert!(store.resolved_secret(OPENROUTER_PROVIDER_ID).is_none());
+    }
+
+    #[test]
+    fn resolved_secret_rejects_whitespace_only() {
+        let store = InMemoryWorkspaceCredentialStore::new();
+        store.save("   ", OPENROUTER_PROVIDER_ID).unwrap();
+        assert!(store.resolved_secret(OPENROUTER_PROVIDER_ID).is_none());
     }
 }
