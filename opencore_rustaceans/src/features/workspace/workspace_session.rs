@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use super::workspace_model::ChatMessage;
+use crate::features::chat::ChatMessage;
 
 /// Serializable workspace session snapshot.
 #[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]

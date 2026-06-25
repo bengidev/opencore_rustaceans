@@ -58,7 +58,7 @@ impl WorkspaceSession for FileWorkspaceSession {
 
 #[cfg(test)]
 mod tests {
-    use super::super::workspace_model::{ChatMessage, ChatRole};
+    use crate::features::chat::{ChatMessage, ChatRole};
     use super::*;
 
     #[test]

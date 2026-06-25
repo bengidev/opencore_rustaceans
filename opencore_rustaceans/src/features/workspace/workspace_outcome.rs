@@ -13,4 +13,6 @@ pub enum WorkspaceOutcome {
     ProjectClosed,
     /// User sent a message; host should start AI streaming.
     StreamRequested(ChatRequest),
+    /// Host should fetch the OpenRouter model catalog with the stored API key.
+    ModelsFetchRequested,
 }

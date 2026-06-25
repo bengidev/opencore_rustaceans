@@ -17,4 +17,13 @@ pub enum WorkspaceMessage {
     StreamCompleted,
     StreamFailed(String),
     ApiKeyPresenceChanged(bool),
+    ModelChipPressed,
+    ModelPickerDismiss,
+    ModelPickerQueryChanged(String),
+    ModelPickerSelect(usize),
+    ModelsLoadStarted,
+    ModelsLoaded(Vec<super::workspace_openrouter_catalog::ModelOption>),
+    ModelsLoadFailed(String),
+    /// Decorative widgets that never emit; satisfies iced message typing.
+    Noop,
 }
