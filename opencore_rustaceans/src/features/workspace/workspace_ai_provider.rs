@@ -1,20 +1,59 @@
 //! AI provider strategy and stream event types.
 
 use std::pin::Pin;
+use std::time::Duration;
 
 use futures_util::Stream;
+use reqwest::Client;
 
 use crate::features::chat::ChatMessage;
 
 pub const DEFAULT_MODEL: &str = "openai/gpt-4o-mini";
 pub const OPENROUTER_PROVIDER_ID: &str = "openrouter";
 
+const HTTP_TIMEOUT: Duration = Duration::from_secs(120);
+const HTTP_CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
+const MAX_USER_ERROR_LEN: usize = 200;
+const MAX_HTTP_BODY_SNIPPET: usize = 160;
+
 /// Request payload for a streaming chat completion.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChatRequest {
     pub model: String,
     pub messages: Vec<ChatMessage>,
-    pub api_key: String,
+}
+
+/// HTTP client shared by OpenRouter adapters.
+pub(crate) fn openrouter_http_client() -> Client {
+    Client::builder()
+        .timeout(HTTP_TIMEOUT)
+        .connect_timeout(HTTP_CONNECT_TIMEOUT)
+        .build()
+        .unwrap_or_else(|_| Client::new())
+}
+
+/// User-facing HTTP error — status plus truncated body snippet.
+pub fn format_http_error(status: reqwest::StatusCode, body: &str) -> String {
+    let trimmed = body.trim();
+    if trimmed.is_empty() {
+        return format!("HTTP {status}");
+    }
+    let snippet = if trimmed.len() > MAX_HTTP_BODY_SNIPPET {
+        format!("{}…", &trimmed[..MAX_HTTP_BODY_SNIPPET])
+    } else {
+        trimmed.to_owned()
+    };
+    format!("HTTP {status}: {snippet}")
+}
+
+/// Truncate arbitrary provider errors before showing or persisting them.
+pub fn sanitize_user_error(message: &str) -> String {
+    let trimmed = message.trim();
+    if trimmed.len() <= MAX_USER_ERROR_LEN {
+        trimmed.to_owned()
+    } else {
+        format!("{}…", &trimmed[..MAX_USER_ERROR_LEN])
+    }
 }
 
 /// Events emitted while streaming an assistant reply.
@@ -105,7 +144,6 @@ mod tests {
                 role: ChatRole::User,
                 content: String::from("hi"),
             }],
-            api_key: String::from("test-key"),
         };
 
         let events = collect_events(&provider, request);

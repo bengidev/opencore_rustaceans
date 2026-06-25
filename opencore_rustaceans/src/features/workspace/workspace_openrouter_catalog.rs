@@ -1,9 +1,8 @@
 //! OpenRouter model catalog client.
 
-use reqwest::Client;
 use serde::Deserialize;
 
-use super::workspace_ai_provider::AiError;
+use super::workspace_ai_provider::{AiError, format_http_error, openrouter_http_client};
 
 const MODELS_URL: &str = "https://openrouter.ai/api/v1/models";
 
@@ -29,7 +28,7 @@ struct ModelRecord {
 ///
 /// The catalog endpoint is public; an API key is optional.
 pub async fn fetch_openrouter_models(api_key: Option<&str>) -> Result<Vec<ModelOption>, AiError> {
-    let client = Client::new();
+    let client = openrouter_http_client();
     let mut request = client
         .get(MODELS_URL)
         .header("HTTP-Referer", "https://opencore.app")
@@ -47,7 +46,7 @@ pub async fn fetch_openrouter_models(api_key: Option<&str>) -> Result<Vec<ModelO
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        return Err(AiError::Request(format!("HTTP {status}: {body}")));
+        return Err(AiError::Request(format_http_error(status, &body)));
     }
 
     let payload: ModelsResponse = response

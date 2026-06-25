@@ -50,6 +50,7 @@ impl AppState {
         }
     }
 
+    #[allow(dead_code)]
     pub fn workspace(&self) -> Option<&WorkspaceState> {
         match &self.screen {
             ActiveScreen::Workspace(state) => Some(state),

@@ -8,6 +8,7 @@ use reqwest::Client;
 
 use super::workspace_ai_provider::{
     AiError, AiProvider, ChatRequest, ChatStreamEvent, OPENROUTER_PROVIDER_ID,
+    format_http_error, openrouter_http_client,
 };
 use super::workspace_credential_store::WorkspaceCredentialStore;
 use super::workspace_sse::parse_sse_chunk;
@@ -30,15 +31,13 @@ impl std::fmt::Debug for OpenRouterProvider {
 impl OpenRouterProvider {
     pub fn new(credentials: Arc<dyn WorkspaceCredentialStore>) -> Self {
         Self {
-            client: Client::new(),
+            client: openrouter_http_client(),
             credentials,
         }
     }
 
-    fn resolve_api_key(&self, request: &ChatRequest) -> Option<String> {
-        self.credentials
-            .resolved_secret(OPENROUTER_PROVIDER_ID)
-            .or_else(|| non_empty_request_key(&request.api_key))
+    fn resolve_api_key(&self) -> Option<String> {
+        self.credentials.resolved_secret(OPENROUTER_PROVIDER_ID)
     }
 
     pub fn build_body(request: &ChatRequest) -> serde_json::Value {
@@ -65,22 +64,13 @@ impl OpenRouterProvider {
     }
 }
 
-fn non_empty_request_key(raw: &str) -> Option<String> {
-    let trimmed = raw.trim();
-    if trimmed.is_empty() {
-        None
-    } else {
-        Some(trimmed.to_owned())
-    }
-}
-
 impl AiProvider for OpenRouterProvider {
     fn stream_chat(
         &self,
         request: ChatRequest,
     ) -> Pin<Box<dyn Stream<Item = Result<ChatStreamEvent, AiError>> + Send>> {
         let client = self.client.clone();
-        let api_key = self.resolve_api_key(&request);
+        let api_key = self.resolve_api_key();
         Box::pin(openrouter_stream(client, request, api_key))
     }
 }
@@ -135,7 +125,7 @@ fn openrouter_stream(
                             let status = response.status();
                             let body = response.text().await.unwrap_or_default();
                             Some((
-                                Some(Err(AiError::Request(format!("HTTP {status}: {body}")))),
+                                Some(Err(AiError::Request(format_http_error(status, &body)))),
                                 StreamState::Finished,
                             ))
                         }
@@ -257,7 +247,6 @@ mod tests {
                 role: ChatRole::User,
                 content: String::from("hello"),
             }],
-            api_key: String::new(),
         };
         let body = OpenRouterProvider::build_body(&request);
         assert_eq!(body["stream"], serde_json::json!(true));
@@ -272,13 +261,8 @@ mod tests {
             .save("sk-or-test-key", OPENROUTER_PROVIDER_ID)
             .unwrap();
         let provider = OpenRouterProvider::new(credentials);
-        let request = ChatRequest {
-            model: String::from("openai/gpt-4o-mini"),
-            messages: vec![],
-            api_key: String::new(),
-        };
         assert_eq!(
-            provider.resolve_api_key(&request),
+            provider.resolve_api_key(),
             Some(String::from("sk-or-test-key"))
         );
     }
@@ -287,11 +271,6 @@ mod tests {
     fn resolve_api_key_requires_non_empty_store_value() {
         let credentials = Arc::new(InMemoryWorkspaceCredentialStore::new());
         let provider = OpenRouterProvider::new(credentials);
-        let request = ChatRequest {
-            model: String::from("openai/gpt-4o-mini"),
-            messages: vec![],
-            api_key: String::new(),
-        };
-        assert_eq!(provider.resolve_api_key(&request), None);
+        assert_eq!(provider.resolve_api_key(), None);
     }
 }

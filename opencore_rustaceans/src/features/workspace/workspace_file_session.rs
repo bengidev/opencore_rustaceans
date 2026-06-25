@@ -43,6 +43,7 @@ impl WorkspaceSession for FileWorkspaceSession {
         }
         let raw = serde_json::to_string_pretty(session)?;
         fs::write(&self.session_path, raw)?;
+        restrict_session_file_permissions(&self.session_path);
         Ok(())
     }
 
@@ -55,6 +56,20 @@ impl WorkspaceSession for FileWorkspaceSession {
         self.save(&session)
     }
 }
+
+#[cfg(unix)]
+fn restrict_session_file_permissions(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+
+    if let Ok(metadata) = fs::metadata(path) {
+        let mut permissions = metadata.permissions();
+        permissions.set_mode(0o600);
+        let _ = fs::set_permissions(path, permissions);
+    }
+}
+
+#[cfg(not(unix))]
+fn restrict_session_file_permissions(_path: &Path) {}
 
 #[cfg(test)]
 mod tests {

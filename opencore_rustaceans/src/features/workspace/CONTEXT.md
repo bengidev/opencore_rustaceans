@@ -14,7 +14,7 @@ session persistence, close-project flow, and chat panel composition.
 | **Overlay** | OpenRouter API key settings, model picker, or close-project confirmation |
 | **Model catalog** | Fetched from OpenRouter when an API key is stored |
 | **Session** | [`WorkspaceSession`] Strategy — JSON snapshot of open project + chat |
-| **Credential store** | [`WorkspaceCredentialStore`] Strategy — keyring + file API keys |
+| **Credential store** | [`WorkspaceCredentialStore`] Strategy — Keychain + file composite (`PersistedWorkspaceCredentialStore`) |
 | **AI provider** | [`AiProvider`] Strategy — OpenRouter SSE streaming (default model `openai/gpt-4o-mini`) |
 
 ## Actions
@@ -38,7 +38,7 @@ Callers outside the module import only from `features::workspace`:
 - `WorkspaceState`, `WorkspaceMessage`, `WorkspaceOutcome`
 - `ChatThread`, `ChatMessage`, `ChatRole` (re-exported from `features::chat`)
 - `WorkspaceSession`, `FileWorkspaceSession`, `InMemoryWorkspaceSession`, `WorkspaceSessionData`
-- `WorkspaceCredentialStore`, `KeychainWorkspaceCredentialStore`, `InMemoryWorkspaceCredentialStore`
+- `WorkspaceCredentialStore`, `PersistedWorkspaceCredentialStore`, `InMemoryWorkspaceCredentialStore`
 - `AiProvider`, `OpenRouterProvider`, `CannedAiProvider`, `ChatRequest`, `ChatStreamEvent`
 - `fetch_openrouter_models`, `ModelOption`
 - `DEFAULT_MODEL`, `OPENROUTER_PROVIDER_ID`

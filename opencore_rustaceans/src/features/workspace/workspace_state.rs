@@ -19,12 +19,10 @@ pub struct WorkspaceState {
     pub available_models: Vec<ModelOption>,
     pub models_loading: bool,
     pub model_query: String,
-    pub model_selection: usize,
     pub overlay: WorkspaceOverlay,
     pub api_key_input: String,
+    pub api_key_status: Option<String>,
     pub has_api_key: bool,
-    #[allow(dead_code)]
-    pub theme_mode: ThemeMode,
     pub theme: OpenCoreTheme,
 }
 
@@ -80,11 +78,10 @@ impl WorkspaceState {
             available_models: Vec::new(),
             models_loading: false,
             model_query: String::new(),
-            model_selection: 0,
             overlay: WorkspaceOverlay::None,
             api_key_input: String::new(),
+            api_key_status: None,
             has_api_key: false,
-            theme_mode,
             theme: OpenCoreTheme::from_mode(theme_mode),
         }
     }
@@ -132,6 +129,7 @@ impl WorkspaceState {
         match message {
             WorkspaceMessage::ApiKeyInputChanged(value) => {
                 self.api_key_input = value;
+                self.api_key_status = None;
                 WorkspaceOutcome::None
             }
             WorkspaceMessage::ApiKeySave => {
@@ -154,6 +152,7 @@ impl WorkspaceState {
             WorkspaceMessage::ApiKeyDismiss => {
                 self.overlay = WorkspaceOverlay::None;
                 self.api_key_input.clear();
+                self.api_key_status = None;
                 WorkspaceOutcome::None
             }
             WorkspaceMessage::ApiKeyPresenceChanged(present) => {
@@ -171,7 +170,6 @@ impl WorkspaceState {
             }
             WorkspaceMessage::ModelPickerQueryChanged(query) => {
                 self.model_query = query;
-                self.model_selection = 0;
                 WorkspaceOutcome::None
             }
             WorkspaceMessage::ModelPickerSelect(index) => {
@@ -260,7 +258,6 @@ impl WorkspaceState {
 
     pub fn open_model_picker(&mut self) {
         self.model_query.clear();
-        self.model_selection = 0;
         self.overlay = WorkspaceOverlay::ModelPicker;
     }
 }

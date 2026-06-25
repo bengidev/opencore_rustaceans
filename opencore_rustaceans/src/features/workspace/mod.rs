@@ -53,7 +53,7 @@ mod workspace_view;
 #[allow(unused_imports)]
 pub use workspace_ai_provider::{
     AiError, AiProvider, CannedAiProvider, ChatRequest, ChatStreamEvent, DEFAULT_MODEL,
-    OPENROUTER_PROVIDER_ID,
+    OPENROUTER_PROVIDER_ID, format_http_error, sanitize_user_error,
 };
 #[allow(unused_imports)]
 pub use workspace_credential_store::{CredentialError, WorkspaceCredentialStore};

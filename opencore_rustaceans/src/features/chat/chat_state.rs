@@ -52,7 +52,9 @@ impl ChatState {
             ChatEvent::StreamFailed(error) => {
                 self.is_streaming = false;
                 if let Some(id) = self.streaming_message_id {
-                    self.thread.append_delta(id, &format!("\n[error: {error}]"));
+                    let message = truncate_error(&error);
+                    self.thread
+                        .append_delta(id, &format!("\n[error: {message}]"));
                 }
                 self.streaming_message_id = None;
                 ChatOutcome::SessionChanged
@@ -86,6 +88,16 @@ impl ChatState {
         self.streaming_message_id = Some(assistant.id);
 
         ChatOutcome::SendRequested(self.thread.messages().to_vec())
+    }
+}
+
+fn truncate_error(message: &str) -> String {
+    const MAX: usize = 200;
+    let trimmed = message.trim();
+    if trimmed.len() <= MAX {
+        trimmed.to_owned()
+    } else {
+        format!("{}…", &trimmed[..MAX])
     }
 }
 

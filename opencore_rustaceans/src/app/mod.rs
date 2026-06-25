@@ -50,7 +50,15 @@ pub fn run_with_backends(
 ) -> iced::Result {
     iced::application(
         move || {
-            let session_data = session.load().unwrap_or_default();
+            let mut session_data = session.load().unwrap_or_default();
+            if session_data
+                .open_project
+                .as_ref()
+                .is_some_and(|path| !path.exists())
+            {
+                let _ = session.clear_open_project();
+                session_data = session.load().unwrap_or_default();
+            }
             let recent_paths = history.load().unwrap_or_default();
             let has_api_key = credentials
                 .resolved_secret(OPENROUTER_PROVIDER_ID)

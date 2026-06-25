@@ -1,6 +1,6 @@
 //! Bridge between workspace messages and the chat module.
 
-use crate::features::chat::{ChatEvent, ChatOutcome};
+use crate::features::chat::{ChatEvent, ChatOutcome, ChatRole};
 
 use super::workspace_ai_provider::ChatRequest;
 use super::workspace_messages::WorkspaceMessage;
@@ -43,10 +43,15 @@ pub fn workspace_outcome_from(
         ChatOutcome::SessionChanged => WorkspaceOutcome::SessionChanged,
         ChatOutcome::ApiKeyRequired => WorkspaceOutcome::None,
         ChatOutcome::SendRequested(messages) => {
+            let outbound = messages
+                .into_iter()
+                .filter(|message| {
+                    !(message.role == ChatRole::Assistant && message.content.is_empty())
+                })
+                .collect();
             WorkspaceOutcome::StreamRequested(ChatRequest {
                 model: model.to_owned(),
-                messages,
-                api_key: String::new(),
+                messages: outbound,
             })
         }
     }

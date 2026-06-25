@@ -4,7 +4,9 @@ use iced::widget::{button, text_input};
 use iced::widget::text_input::Status as InputStatus;
 
 use crate::shared::design::OpenCoreTheme;
-use crate::shared::design::design_tokens::{BackgroundToken, BorderToken, ForegroundToken, RadiusToken};
+use crate::shared::design::design_tokens::{
+    ActionToken, BackgroundToken, BorderToken, ForegroundToken, RadiusToken,
+};
 
 pub fn control_radius() -> iced::border::Radius {
     RadiusToken::Sm.value().into()
@@ -38,13 +40,6 @@ pub fn text_input_style(theme: OpenCoreTheme, status: InputStatus) -> text_input
             ..base
         },
         InputStatus::Active => base,
-    }
-}
-
-fn with_alpha(color: iced::Color, alpha: f32) -> iced::Color {
-    iced::Color {
-        a: alpha.clamp(0.0, 1.0),
-        ..color
     }
 }
 
@@ -113,5 +108,43 @@ pub fn icon_button_style(
             ..base
         },
         _ => base,
+    }
+}
+
+pub fn primary_button_style(theme: OpenCoreTheme, status: button::Status) -> button::Style {
+    let base = button::Style {
+        background: Some(iced::Background::Color(theme.action(ActionToken::Strong))),
+        text_color: theme.action(ActionToken::StrongText),
+        border: iced::Border {
+            radius: control_radius(),
+            width: 0.0,
+            color: iced::Color::TRANSPARENT,
+        },
+        ..Default::default()
+    };
+
+    match status {
+        button::Status::Hovered => button::Style {
+            background: Some(iced::Background::Color(with_alpha(
+                theme.action(ActionToken::Strong),
+                0.88,
+            ))),
+            ..base
+        },
+        button::Status::Pressed => button::Style {
+            background: Some(iced::Background::Color(with_alpha(
+                theme.action(ActionToken::Strong),
+                0.72,
+            ))),
+            ..base
+        },
+        _ => base,
+    }
+}
+
+fn with_alpha(color: iced::Color, alpha: f32) -> iced::Color {
+    iced::Color {
+        a: alpha.clamp(0.0, 1.0),
+        ..color
     }
 }

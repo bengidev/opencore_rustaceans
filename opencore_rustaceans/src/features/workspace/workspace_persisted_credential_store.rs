@@ -46,13 +46,21 @@ impl WorkspaceCredentialStore for PersistedWorkspaceCredentialStore {
             )));
         }
         self.file.save(trimmed, provider_id)?;
-        let _ = self.keychain.save(trimmed, provider_id);
+        if let Err(error) = self.keychain.save(trimmed, provider_id) {
+            eprintln!("keychain save failed (file copy saved): {error}");
+        }
         Ok(())
     }
 
     fn clear(&self, provider_id: &str) -> Result<(), CredentialError> {
-        let _ = self.keychain.clear(provider_id);
-        self.file.clear(provider_id)
+        self.file.clear(provider_id)?;
+        self.keychain.clear(provider_id)?;
+        if self.secret(provider_id).is_some() {
+            return Err(CredentialError::Store(String::from(
+                "API key could not be fully removed",
+            )));
+        }
+        Ok(())
     }
 }
 
@@ -70,5 +78,14 @@ mod tests {
             store.secret(OPENROUTER_PROVIDER_ID),
             Some(String::from("secret-key"))
         );
+    }
+
+    #[test]
+    fn clear_removes_file_backed_secret() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let store = PersistedWorkspaceCredentialStore::new_at(tmp.path());
+        store.save("secret-key", OPENROUTER_PROVIDER_ID).unwrap();
+        store.clear(OPENROUTER_PROVIDER_ID).unwrap();
+        assert!(store.secret(OPENROUTER_PROVIDER_ID).is_none());
     }
 }

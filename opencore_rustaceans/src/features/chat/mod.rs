@@ -34,5 +34,5 @@ pub use chat_messages::ChatEvent;
 pub use chat_model::{ChatMessage, ChatRole, ChatThread};
 pub use chat_outcome::ChatOutcome;
 pub use chat_state::ChatState;
-pub use chat_style::{chip_button_style, control_radius, text_input_style};
+pub use chat_style::{chip_button_style, control_radius, primary_button_style, text_input_style};
 pub use chat_view::{body, composer};

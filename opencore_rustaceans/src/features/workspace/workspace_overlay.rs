@@ -10,13 +10,13 @@ use iced::widget::{
 
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_tokens::{
-    ActionToken, BackgroundToken, BorderToken, ForegroundToken, SpacingToken,
+    BackgroundToken, BorderToken, ForegroundToken, SpacingToken,
     TypeRole,
 };
 
 use super::workspace_messages::WorkspaceMessage;
 use super::workspace_state::WorkspaceState;
-use crate::features::chat::{control_radius, text_input_style};
+use crate::features::chat::{chip_button_style, control_radius, primary_button_style, text_input_style};
 
 /// Active overlay on the workspace screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -101,7 +101,7 @@ fn api_key_settings_panel(
         });
 
     let hint = text(
-        "Enter your OpenRouter API key to load models and send messages. It is stored securely and never shown again.",
+        "Enter your OpenRouter API key to load models and send messages. Keys are stored on this device (Keychain when available, otherwise a local app-data file with restricted permissions). The key is never shown again after saving.",
     )
         .size(TypeRole::LabelMd.size())
         .style(move |_t: &Theme| text::Style {
@@ -114,6 +114,17 @@ fn api_key_settings_panel(
         .padding(SpacingToken::S3.value())
         .size(TypeRole::BodyMd.size())
         .style(move |_t: &Theme, status| text_input_style(theme, status));
+
+    let mut fields = column![title, hint, field].spacing(SpacingToken::S4.value());
+    if let Some(status) = &state.api_key_status {
+        fields = fields.push(
+            text(status.clone())
+                .size(TypeRole::LabelMd.size())
+                .style(move |_t: &Theme| text::Style {
+                    color: Some(theme.foreground(ForegroundToken::Secondary)),
+                }),
+        );
+    }
 
     let save = button(text("Save").size(TypeRole::LabelMd.size()))
         .on_press(WorkspaceMessage::ApiKeySave)
@@ -132,14 +143,11 @@ fn api_key_settings_panel(
 
     container(
         column![
-            title,
-            hint,
-            field,
+            fields,
             row![save, remove, Space::new().width(Length::Fill), done]
                 .spacing(SpacingToken::S2.value())
                 .align_y(Vertical::Center),
         ]
-        .spacing(SpacingToken::S4.value())
         .width(Length::Fill),
     )
     .width(Length::Fixed(PANEL_WIDTH))
@@ -305,69 +313,6 @@ fn close_project_panel(theme: OpenCoreTheme) -> Element<'static, WorkspaceMessag
         ..Default::default()
     })
     .into()
-}
-
-fn primary_button_style(theme: OpenCoreTheme, status: button::Status) -> button::Style {
-    let base = button::Style {
-        background: Some(iced::Background::Color(theme.action(ActionToken::Strong))),
-        text_color: theme.action(ActionToken::StrongText),
-        border: iced::Border {
-            radius: control_radius(),
-            width: 0.0,
-            color: iced::Color::TRANSPARENT,
-        },
-        ..Default::default()
-    };
-
-    match status {
-        button::Status::Hovered => button::Style {
-            background: Some(iced::Background::Color(with_alpha(
-                theme.action(ActionToken::Strong),
-                0.88,
-            ))),
-            ..base
-        },
-        button::Status::Pressed => button::Style {
-            background: Some(iced::Background::Color(with_alpha(
-                theme.action(ActionToken::Strong),
-                0.72,
-            ))),
-            ..base
-        },
-        _ => base,
-    }
-}
-
-fn chip_button_style(theme: OpenCoreTheme, status: button::Status) -> button::Style {
-    let base = button::Style {
-        background: Some(iced::Background::Color(
-            theme.background(BackgroundToken::Tertiary),
-        )),
-        text_color: theme.foreground(ForegroundToken::Primary),
-        border: iced::Border {
-            radius: control_radius(),
-            width: 1.0,
-            color: theme.border(BorderToken::Default),
-        },
-        ..Default::default()
-    };
-
-    match status {
-        button::Status::Hovered => button::Style {
-            border: iced::Border {
-                color: theme.border(BorderToken::Strong),
-                ..base.border
-            },
-            ..base
-        },
-        button::Status::Pressed => button::Style {
-            background: Some(iced::Background::Color(
-                theme.background(BackgroundToken::Secondary),
-            )),
-            ..base
-        },
-        _ => base,
-    }
 }
 
 fn with_alpha(color: iced::Color, alpha: f32) -> iced::Color {
