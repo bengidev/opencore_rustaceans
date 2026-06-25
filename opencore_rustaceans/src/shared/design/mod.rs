@@ -9,10 +9,14 @@
 
 pub mod design_iced_theme;
 pub mod design_palette;
+pub mod design_platform;
+pub mod design_radius;
 pub mod design_theme;
 pub mod design_tokens;
 
 pub use design_iced_theme::iced_theme;
+pub use design_platform::{control_corner_radius, window_corner_radius};
+pub use design_radius::{control_radius, surface_radius};
 pub use design_theme::{OpenCoreTheme, ThemeMode};
 pub use design_tokens::{
     AccentToken, ActionToken, BackgroundToken, BorderToken, ForegroundToken, RadiusToken,
