@@ -1,0 +1,122 @@
+//! AI provider strategy and stream event types.
+
+use std::pin::Pin;
+
+use futures_util::Stream;
+
+use super::workspace_model::ChatMessage;
+
+pub const DEFAULT_MODEL: &str = "openai/gpt-4o-mini";
+pub const OPENROUTER_PROVIDER_ID: &str = "openrouter";
+
+/// Request payload for a streaming chat completion.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChatRequest {
+    pub model: String,
+    pub messages: Vec<ChatMessage>,
+    pub api_key: String,
+}
+
+/// Events emitted while streaming an assistant reply.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ChatStreamEvent {
+    Delta { content: String },
+    Done,
+    Error(String),
+}
+
+/// Errors from AI providers.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum AiError {
+    #[error("request failed: {0}")]
+    Request(String),
+    #[error("stream parse error: {0}")]
+    Parse(String),
+}
+
+/// Strategy for streaming chat completions from an AI backend.
+pub trait AiProvider: Send + Sync {
+    fn stream_chat(
+        &self,
+        request: ChatRequest,
+    ) -> Pin<Box<dyn Stream<Item = Result<ChatStreamEvent, AiError>> + Send>>;
+}
+
+/// Test double returning a fixed event sequence without network I/O.
+#[cfg_attr(not(test), allow(dead_code))]
+#[derive(Debug, Clone)]
+pub struct CannedAiProvider {
+    events: Vec<Result<ChatStreamEvent, AiError>>,
+}
+
+impl CannedAiProvider {
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub fn new(events: Vec<Result<ChatStreamEvent, AiError>>) -> Self {
+        Self { events }
+    }
+}
+
+impl AiProvider for CannedAiProvider {
+    fn stream_chat(
+        &self,
+        _request: ChatRequest,
+    ) -> Pin<Box<dyn Stream<Item = Result<ChatStreamEvent, AiError>> + Send>> {
+        let events = self.events.clone();
+        Box::pin(futures_util::stream::iter(events))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::workspace_model::{ChatMessage, ChatRole};
+    use super::*;
+    use std::task::{Context, Poll};
+
+    fn collect_events(
+        provider: &CannedAiProvider,
+        request: ChatRequest,
+    ) -> Vec<Result<ChatStreamEvent, AiError>> {
+        let mut stream = provider.stream_chat(request);
+        let waker = futures_util::task::noop_waker();
+        let mut cx = Context::from_waker(&waker);
+        let mut events = Vec::new();
+        loop {
+            match stream.as_mut().poll_next(&mut cx) {
+                Poll::Ready(Some(item)) => events.push(item),
+                Poll::Ready(None) => break,
+                Poll::Pending => panic!("canned stream should not pend"),
+            }
+        }
+        events
+    }
+
+    #[test]
+    fn canned_provider_yields_configured_events() {
+        let provider = CannedAiProvider::new(vec![
+            Ok(ChatStreamEvent::Delta {
+                content: String::from("hello"),
+            }),
+            Ok(ChatStreamEvent::Done),
+        ]);
+        let request = ChatRequest {
+            model: DEFAULT_MODEL.into(),
+            messages: vec![ChatMessage {
+                id: 1,
+                role: ChatRole::User,
+                content: String::from("hi"),
+            }],
+            api_key: String::from("test-key"),
+        };
+
+        let events = collect_events(&provider, request);
+
+        assert_eq!(events.len(), 2);
+        assert_eq!(
+            events[0],
+            Ok(ChatStreamEvent::Delta {
+                content: String::from("hello")
+            })
+        );
+        assert_eq!(events[1], Ok(ChatStreamEvent::Done));
+    }
+}
