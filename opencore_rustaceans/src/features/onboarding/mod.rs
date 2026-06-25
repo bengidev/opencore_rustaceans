@@ -118,10 +118,7 @@ impl OnboardingApp {
     }
 
     fn theme(&self) -> Theme {
-        match self.state.theme_mode {
-            crate::shared::design::ThemeMode::Dark => Theme::Dark,
-            crate::shared::design::ThemeMode::Light => Theme::Light,
-        }
+        crate::shared::design::iced_theme(self.state.theme_mode)
     }
 }
 
