@@ -86,14 +86,12 @@ pub fn view(state: &WorkspaceState) -> Element<'_, WorkspaceMessage> {
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .padding([0.0, HORIZONTAL_PAD]),
-            container(chat_composer)
-                .width(Length::Fill)
-                .padding(
-                    Padding::ZERO
-                        .top(SpacingToken::Hairline.value())
-                        .bottom(SpacingToken::S4.value())
-                        .horizontal(HORIZONTAL_PAD),
-                ),
+            container(chat_composer).width(Length::Fill).padding(
+                Padding::ZERO
+                    .top(SpacingToken::Hairline.value())
+                    .bottom(SpacingToken::S4.value())
+                    .horizontal(HORIZONTAL_PAD),
+            ),
         ]
         .width(Length::Fill)
         .height(Length::Fill),
@@ -155,11 +153,16 @@ fn model_chip_control(state: &WorkspaceState) -> Element<'_, ChatEvent> {
     };
 
     let content = container(
-        row![status_dot, eye, text(label)
-            .size(TypeRole::MonoSm.size())
-            .style(move |_t: &Theme| text::Style {
-                color: Some(text_color),
-            }), chevron,]
+        row![
+            status_dot,
+            eye,
+            text(label)
+                .size(TypeRole::MonoSm.size())
+                .style(move |_t: &Theme| text::Style {
+                    color: Some(text_color),
+                }),
+            chevron,
+        ]
         .align_y(Vertical::Center)
         .spacing(SpacingToken::S1.value()),
     )

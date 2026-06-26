@@ -105,9 +105,12 @@ fn config_toolbar<'a>(
     .spacing(SpacingToken::S1.value())
     .align_y(Vertical::Center);
 
-    let token_meter = column![token_meter_bar(theme, token_count), token_meter_label(theme, token_count)]
-        .spacing(SpacingToken::S1.value())
-        .align_x(Horizontal::Right);
+    let token_meter = column![
+        token_meter_bar(theme, token_count),
+        token_meter_label(theme, token_count)
+    ]
+    .spacing(SpacingToken::S1.value())
+    .align_x(Horizontal::Right);
 
     let trailing = column![directory, token_meter]
         .spacing(SpacingToken::S1.value())
@@ -119,7 +122,11 @@ fn config_toolbar<'a>(
         .into()
 }
 
-fn composer_card(state: &ChatState, theme: OpenCoreTheme, can_send: bool) -> Element<'_, ChatEvent> {
+fn composer_card(
+    state: &ChatState,
+    theme: OpenCoreTheme,
+    can_send: bool,
+) -> Element<'_, ChatEvent> {
     let input = text_input("Message or attach files…", &state.draft)
         .on_input(ChatEvent::DraftChanged)
         .padding([SpacingToken::S3.value(), SpacingToken::S4.value()])
@@ -191,7 +198,12 @@ fn mock_pill(
         .align_y(Vertical::Center);
 
     content = content
-        .push(centered_glyph(icon, icon_color, CHIP_GLYPH_BOX, CHIP_GLYPH_SIZE))
+        .push(centered_glyph(
+            icon,
+            icon_color,
+            CHIP_GLYPH_BOX,
+            CHIP_GLYPH_SIZE,
+        ))
         .push(
             text(label)
                 .size(TypeRole::LabelMd.size())
