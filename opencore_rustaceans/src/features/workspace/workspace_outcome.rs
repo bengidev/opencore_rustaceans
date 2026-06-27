@@ -9,8 +9,6 @@ pub enum WorkspaceOutcome {
     None,
     /// Workspace snapshot changed; host should persist session.
     SessionChanged,
-    /// User confirmed close project; host should clear session and return to welcome.
-    ProjectClosed,
     /// User sent a message; host should start AI streaming.
     StreamRequested(ChatRequest),
     /// Host should fetch the OpenRouter model catalog with the stored API key.

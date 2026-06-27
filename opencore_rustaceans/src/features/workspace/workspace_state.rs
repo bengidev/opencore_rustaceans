@@ -217,33 +217,14 @@ impl WorkspaceState {
                 eprintln!("failed to load OpenRouter models: {error}");
                 WorkspaceOutcome::None
             }
-            WorkspaceMessage::CloseProjectRequested => {
-                self.overlay = WorkspaceOverlay::CloseProjectConfirm;
-                WorkspaceOutcome::None
-            }
-            WorkspaceMessage::CloseProjectCancel => {
-                self.overlay = WorkspaceOverlay::None;
-                WorkspaceOutcome::None
-            }
-            WorkspaceMessage::CloseProjectConfirm => {
-                self.overlay = WorkspaceOverlay::None;
-                WorkspaceOutcome::ProjectClosed
-            }
             _ => WorkspaceOutcome::None,
         }
     }
 
     fn update_chat(&mut self, event: ChatEvent) -> WorkspaceOutcome {
-        match event {
-            ChatEvent::SandboxScopePressed => {
-                self.composer_scope = ComposerScope::Sandbox;
-                return WorkspaceOutcome::SessionChanged;
-            }
-            ChatEvent::FolderScopePressed => {
-                self.composer_scope = ComposerScope::Folder;
-                return WorkspaceOutcome::SessionChanged;
-            }
-            _ => {}
+        if event == ChatEvent::FolderScopePressed {
+            self.composer_scope = ComposerScope::Folder;
+            return WorkspaceOutcome::SessionChanged;
         }
 
         if matches!(
@@ -384,23 +365,9 @@ mod tests {
     }
 
     #[test]
-    fn close_project_confirm_returns_project_closed() {
-        let mut state = sample_state();
-        state.overlay = WorkspaceOverlay::CloseProjectConfirm;
-        let outcome = state.update(WorkspaceMessage::CloseProjectConfirm);
-        assert_eq!(outcome, WorkspaceOutcome::ProjectClosed);
-        assert_eq!(state.overlay, WorkspaceOverlay::None);
-    }
-
-    #[test]
-    fn composer_scope_switches_on_chip_press() {
-        let mut state = sample_state();
-        assert_eq!(state.composer_scope, super::ComposerScope::Sandbox);
-        state.update(WorkspaceMessage::FolderScopePressed);
+    fn composer_scope_defaults_to_folder() {
+        let state = sample_state();
         assert_eq!(state.composer_scope, super::ComposerScope::Folder);
-        let outcome = state.update(WorkspaceMessage::SandboxScopePressed);
-        assert_eq!(outcome, WorkspaceOutcome::SessionChanged);
-        assert_eq!(state.composer_scope, super::ComposerScope::Sandbox);
     }
 
     #[test]

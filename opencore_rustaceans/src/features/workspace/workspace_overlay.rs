@@ -1,4 +1,4 @@
-//! Modal overlays for API key settings and close-project confirmation.
+//! Modal overlays for API key settings and model picker.
 
 use iced::Element;
 use iced::Length;
@@ -27,7 +27,6 @@ pub enum WorkspaceOverlay {
     None,
     ApiKeySettings,
     ModelPicker,
-    CloseProjectConfirm,
 }
 
 const PANEL_WIDTH: f32 = 420.0;
@@ -47,11 +46,6 @@ pub fn overlay_layer(state: &WorkspaceState) -> Element<'_, WorkspaceMessage> {
         WorkspaceOverlay::ModelPicker => modal_overlay(
             model_picker_panel(state, theme),
             WorkspaceMessage::ModelPickerDismiss,
-            theme,
-        ),
-        WorkspaceOverlay::CloseProjectConfirm => modal_overlay(
-            close_project_panel(theme),
-            WorkspaceMessage::CloseProjectCancel,
             theme,
         ),
     }
@@ -245,58 +239,6 @@ fn model_picker_panel(
             .width(Length::Fill),
     )
     .width(Length::Fixed(MODEL_PANEL_WIDTH))
-    .padding(SpacingToken::S5.value())
-    .style(move |_t: &Theme| container::Style {
-        background: Some(iced::Background::Color(
-            theme.background(BackgroundToken::Elevated),
-        )),
-        border: iced::Border {
-            color: theme.border(BorderToken::Default),
-            width: 1.0,
-            radius: control_radius(),
-        },
-        ..Default::default()
-    })
-    .into()
-}
-
-fn close_project_panel(theme: OpenCoreTheme) -> Element<'static, WorkspaceMessage> {
-    let title = text("Close project?")
-        .size(TypeRole::BodyLg.size())
-        .style(move |_t: &Theme| text::Style {
-            color: Some(theme.foreground(ForegroundToken::Primary)),
-        });
-
-    let body = text(
-        "You will return to the welcome screen. Chat history for this session will be cleared.",
-    )
-    .size(TypeRole::LabelMd.size())
-    .style(move |_t: &Theme| text::Style {
-        color: Some(theme.foreground(ForegroundToken::Secondary)),
-    });
-
-    let cancel = button(text("Cancel").size(TypeRole::LabelMd.size()))
-        .on_press(WorkspaceMessage::CloseProjectCancel)
-        .padding([SpacingToken::S2.value(), SpacingToken::S4.value()])
-        .style(move |_t: &Theme, status| chip_button_style(theme, status, false));
-
-    let confirm = button(text("Close project").size(TypeRole::LabelMd.size()))
-        .on_press(WorkspaceMessage::CloseProjectConfirm)
-        .padding([SpacingToken::S2.value(), SpacingToken::S4.value()])
-        .style(move |_t: &Theme, status| primary_button_style(theme, status));
-
-    container(
-        column![
-            title,
-            body,
-            row![Space::new().width(Length::Fill), cancel, confirm]
-                .spacing(SpacingToken::S2.value())
-                .align_y(Vertical::Center),
-        ]
-        .spacing(SpacingToken::S4.value())
-        .width(Length::Fill),
-    )
-    .width(Length::Fixed(PANEL_WIDTH))
     .padding(SpacingToken::S5.value())
     .style(move |_t: &Theme| container::Style {
         background: Some(iced::Background::Color(
