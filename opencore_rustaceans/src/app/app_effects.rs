@@ -77,14 +77,6 @@ pub fn handle_update(
             persist_session(state, session.as_ref());
             Task::none()
         }
-        ShellUpdate::ProjectClosed => {
-            if let Err(error) = session.clear_open_project() {
-                eprintln!("failed to clear workspace session: {error}");
-            }
-            let recent_paths = history.load().unwrap_or_default();
-            state.open_welcome(recent_paths);
-            Task::none()
-        }
         ShellUpdate::StreamRequested(request) => {
             sync_workspace_api_key(state, credentials);
             start_ai_stream(request, ai.clone())
@@ -173,7 +165,6 @@ fn map_workspace_shell_update(
     match outcome {
         crate::features::workspace::WorkspaceOutcome::None => ShellUpdate::None,
         crate::features::workspace::WorkspaceOutcome::SessionChanged => ShellUpdate::SessionChanged,
-        crate::features::workspace::WorkspaceOutcome::ProjectClosed => ShellUpdate::ProjectClosed,
         crate::features::workspace::WorkspaceOutcome::StreamRequested(request) => {
             ShellUpdate::StreamRequested(request)
         }

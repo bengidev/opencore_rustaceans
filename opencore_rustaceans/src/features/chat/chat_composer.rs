@@ -114,15 +114,11 @@ fn composer_card(
         can_send.then_some(ChatEvent::SendPressed),
     );
 
-    let action_bar = row![
-        Space::new().width(Length::Fill),
-        send_hint,
-        send,
-    ]
-    .align_y(Vertical::Center)
-    .spacing(SpacingToken::S2.value())
-    .width(Length::Fill)
-    .padding([SpacingToken::S2.value(), SpacingToken::S4.value()]);
+    let action_bar = row![Space::new().width(Length::Fill), send_hint, send,]
+        .align_y(Vertical::Center)
+        .spacing(SpacingToken::S2.value())
+        .width(Length::Fill)
+        .padding([SpacingToken::S2.value(), SpacingToken::S4.value()]);
 
     container(column![input, action_bar].width(Length::Fill))
         .width(Length::Fill)

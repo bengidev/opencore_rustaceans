@@ -217,29 +217,14 @@ impl WorkspaceState {
                 eprintln!("failed to load OpenRouter models: {error}");
                 WorkspaceOutcome::None
             }
-            WorkspaceMessage::CloseProjectRequested => {
-                self.overlay = WorkspaceOverlay::CloseProjectConfirm;
-                WorkspaceOutcome::None
-            }
-            WorkspaceMessage::CloseProjectCancel => {
-                self.overlay = WorkspaceOverlay::None;
-                WorkspaceOutcome::None
-            }
-            WorkspaceMessage::CloseProjectConfirm => {
-                self.overlay = WorkspaceOverlay::None;
-                WorkspaceOutcome::ProjectClosed
-            }
             _ => WorkspaceOutcome::None,
         }
     }
 
     fn update_chat(&mut self, event: ChatEvent) -> WorkspaceOutcome {
-        match event {
-            ChatEvent::FolderScopePressed => {
-                self.composer_scope = ComposerScope::Folder;
-                return WorkspaceOutcome::SessionChanged;
-            }
-            _ => {}
+        if event == ChatEvent::FolderScopePressed {
+            self.composer_scope = ComposerScope::Folder;
+            return WorkspaceOutcome::SessionChanged;
         }
 
         if matches!(
@@ -377,15 +362,6 @@ mod tests {
         state.update(WorkspaceMessage::StreamCompleted);
         assert!(!state.chat.is_streaming);
         assert!(state.chat.streaming_message_id.is_none());
-    }
-
-    #[test]
-    fn close_project_confirm_returns_project_closed() {
-        let mut state = sample_state();
-        state.overlay = WorkspaceOverlay::CloseProjectConfirm;
-        let outcome = state.update(WorkspaceMessage::CloseProjectConfirm);
-        assert_eq!(outcome, WorkspaceOutcome::ProjectClosed);
-        assert_eq!(state.overlay, WorkspaceOverlay::None);
     }
 
     #[test]

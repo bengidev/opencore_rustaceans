@@ -23,7 +23,6 @@ pub struct AppState {
 pub enum ShellUpdate {
     None,
     SessionChanged,
-    ProjectClosed,
     StreamRequested(crate::features::workspace::ChatRequest),
     ModelsFetchRequested,
     WelcomeAction(WelcomeOutcome),
@@ -72,13 +71,6 @@ impl AppState {
         self.screen = ActiveScreen::Workspace(workspace);
     }
 
-    pub fn open_welcome(&mut self, recent_paths: Vec<PathBuf>) {
-        self.screen = ActiveScreen::Welcome(WelcomeState::with_recent_paths(
-            self.theme_mode,
-            recent_paths,
-        ));
-    }
-
     pub fn update(&mut self, message: ShellMessage) -> ShellUpdate {
         match message {
             ShellMessage::Welcome(welcome_message) => {
@@ -113,7 +105,6 @@ fn map_workspace_outcome(outcome: WorkspaceOutcome) -> ShellUpdate {
     match outcome {
         WorkspaceOutcome::None => ShellUpdate::None,
         WorkspaceOutcome::SessionChanged => ShellUpdate::SessionChanged,
-        WorkspaceOutcome::ProjectClosed => ShellUpdate::ProjectClosed,
         WorkspaceOutcome::StreamRequested(request) => ShellUpdate::StreamRequested(request),
         WorkspaceOutcome::ModelsFetchRequested => ShellUpdate::ModelsFetchRequested,
     }
@@ -150,24 +141,6 @@ mod tests {
             update,
             ShellUpdate::WelcomeAction(WelcomeOutcome::WorkspaceOpened(path))
         );
-    }
-
-    #[test]
-    fn workspace_close_project_yields_project_closed() {
-        let mut state = AppState::new(
-            ActiveScreen::Workspace(WorkspaceState::new(
-                PathBuf::from("/tmp/project"),
-                ThemeMode::Dark,
-            )),
-            ThemeMode::Dark,
-        );
-        state.update(ShellMessage::Workspace(
-            WorkspaceMessage::CloseProjectRequested,
-        ));
-        let update = state.update(ShellMessage::Workspace(
-            WorkspaceMessage::CloseProjectConfirm,
-        ));
-        assert_eq!(update, ShellUpdate::ProjectClosed);
     }
 
     #[test]
