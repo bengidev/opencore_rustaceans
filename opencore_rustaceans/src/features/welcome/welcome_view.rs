@@ -11,6 +11,7 @@ use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{MouseArea, Space, button, column, container, row, stack, text, text_input};
 
 use crate::shared::design::OpenCoreTheme;
+use crate::shared::design::design_radius::{control_radius, surface_radius};
 use crate::shared::design::design_tokens::{
     BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
 };
@@ -256,7 +257,7 @@ fn command_palette_panel(
             theme.background(BackgroundToken::Secondary),
         )),
         border: iced::Border {
-            radius: 8.0.into(),
+            radius: surface_radius(),
             width: 1.0,
             color: theme.border(BorderToken::Default),
         },
@@ -316,7 +317,7 @@ fn clone_repository_panel(
                 theme.background(BackgroundToken::Secondary),
             )),
             border: iced::Border {
-                radius: 8.0.into(),
+                radius: surface_radius(),
                 width: 1.0,
                 color: theme.border(BorderToken::Default),
             },
@@ -371,7 +372,7 @@ fn logo_mark(theme: OpenCoreTheme) -> Element<'static, WelcomeMessage> {
             theme.background(BackgroundToken::Tertiary),
         )),
         border: iced::Border {
-            radius: 8.0.into(),
+            radius: surface_radius(),
             width: 1.0,
             color: theme.border(BorderToken::Default),
         },
@@ -515,7 +516,7 @@ fn welcome_row_style(theme: OpenCoreTheme, status: button::Status) -> button::St
         background: Some(iced::Background::Color(iced::Color::TRANSPARENT)),
         text_color: theme.foreground(ForegroundToken::Primary),
         border: iced::Border {
-            radius: 4.0.into(),
+            radius: control_radius(),
             width: 0.0,
             color: iced::Color::TRANSPARENT,
         },

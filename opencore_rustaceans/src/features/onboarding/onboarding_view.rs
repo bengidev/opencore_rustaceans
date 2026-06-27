@@ -14,9 +14,11 @@ use iced::widget::{MouseArea, Space, Stack, button, column, container, row, text
 
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::ThemeMode;
+use crate::shared::design::design_radius::control_radius;
 use crate::shared::design::design_tokens::{
-    ActionToken, BackgroundToken, BorderToken, ForegroundToken, RadiusToken, SpacingToken, TypeRole,
+    ActionToken, BackgroundToken, ForegroundToken, SpacingToken, TypeRole,
 };
+use crate::shared::design::{chip_button_style, primary_button_style, with_alpha};
 
 use super::onboarding_feature_card_icon::{FeatureCardIcon, FeatureKind};
 use super::onboarding_galaxy_orb::GalaxyOrbProgram;
@@ -132,7 +134,7 @@ fn theme_toggle_button(state: &OnboardingState) -> Element<'_, OnboardingMessage
     )
     .padding([6, 10])
     .on_press(OnboardingMessage::ToggleTheme)
-    .style(move |_t: &Theme, status| chip_style(theme, status))
+    .style(move |_t: &Theme, status| chip_button_style(theme, status, false))
     .into()
 }
 
@@ -152,7 +154,7 @@ fn theme_mode_icon(mode: ThemeMode, theme: OpenCoreTheme) -> Element<'static, On
     .style(move |_t: &Theme| container::Style {
         background: Some(iced::Background::Color(bg)),
         border: iced::Border {
-            radius: RadiusToken::Xs.value().into(),
+            radius: control_radius(),
             width: 1.0,
             color: with_alpha(stroke, 0.35),
         },
@@ -293,14 +295,14 @@ fn action_row(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
     )
     .padding([14, 28])
     .on_press(OnboardingMessage::EnterPressed)
-    .style(move |_t: &Theme, status| primary_action_style(theme, status));
+    .style(move |_t: &Theme, status| primary_button_style(theme, status));
 
     let skip = button(text("Skip").size(12).style(move |_t: &Theme| text::Style {
         color: Some(theme.foreground(ForegroundToken::Muted)),
     }))
     .padding([14, 18])
     .on_press(OnboardingMessage::Skipped)
-    .style(move |_t: &Theme, status| chip_style(theme, status));
+    .style(move |_t: &Theme, status| chip_button_style(theme, status, false));
 
     row![
         Space::new().width(Length::Fill),
@@ -312,74 +314,4 @@ fn action_row(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
     .align_y(Vertical::Center)
     .width(Length::Fill)
     .into()
-}
-
-fn primary_action_style(theme: OpenCoreTheme, status: button::Status) -> button::Style {
-    let base = button::Style {
-        background: Some(iced::Background::Color(theme.action(ActionToken::Strong))),
-        text_color: theme.action(ActionToken::StrongText),
-        border: iced::Border {
-            radius: RadiusToken::Sm.value().into(),
-            width: 0.0,
-            color: iced::Color::TRANSPARENT,
-        },
-        ..Default::default()
-    };
-    match status {
-        button::Status::Hovered => button::Style {
-            background: Some(iced::Background::Color(with_alpha(
-                theme.action(ActionToken::Strong),
-                0.88,
-            ))),
-            ..base
-        },
-        button::Status::Pressed => button::Style {
-            background: Some(iced::Background::Color(with_alpha(
-                theme.action(ActionToken::Strong),
-                0.72,
-            ))),
-            ..base
-        },
-        _ => base,
-    }
-}
-
-fn chip_style(theme: OpenCoreTheme, status: button::Status) -> button::Style {
-    let text_color = theme.foreground(ForegroundToken::Secondary);
-    let base = button::Style {
-        background: Some(iced::Background::Color(
-            theme.background(BackgroundToken::Tertiary),
-        )),
-        text_color,
-        border: iced::Border {
-            radius: RadiusToken::Xs.value().into(),
-            width: 1.0,
-            color: theme.border(BorderToken::Default),
-        },
-        ..Default::default()
-    };
-    match status {
-        button::Status::Hovered => button::Style {
-            border: iced::Border {
-                radius: RadiusToken::Xs.value().into(),
-                width: 1.0,
-                color: theme.border(BorderToken::Strong),
-            },
-            ..base
-        },
-        button::Status::Pressed => button::Style {
-            background: Some(iced::Background::Color(
-                theme.background(BackgroundToken::Secondary),
-            )),
-            ..base
-        },
-        _ => base,
-    }
-}
-
-fn with_alpha(color: iced::Color, alpha: f32) -> iced::Color {
-    iced::Color {
-        a: alpha.clamp(0.0, 1.0),
-        ..color
-    }
 }

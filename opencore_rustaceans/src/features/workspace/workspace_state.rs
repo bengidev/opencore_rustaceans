@@ -11,6 +11,7 @@ use super::workspace_messages::WorkspaceMessage;
 use super::workspace_openrouter_catalog::ModelOption;
 use super::workspace_outcome::WorkspaceOutcome;
 use super::workspace_overlay::WorkspaceOverlay;
+use super::workspace_scope::ComposerScope;
 
 pub struct WorkspaceState {
     pub project_path: PathBuf,
@@ -23,6 +24,7 @@ pub struct WorkspaceState {
     pub api_key_input: String,
     pub api_key_status: Option<String>,
     pub has_api_key: bool,
+    pub composer_scope: ComposerScope,
     pub theme: OpenCoreTheme,
 }
 
@@ -77,6 +79,7 @@ impl WorkspaceState {
             api_key_input: String::new(),
             api_key_status: None,
             has_api_key: false,
+            composer_scope: ComposerScope::default(),
             theme: OpenCoreTheme::from_mode(theme_mode),
         }
     }
@@ -98,6 +101,17 @@ impl WorkspaceState {
             .find(|option| option.id == self.model)
             .map(|option| option.name.clone())
             .unwrap_or_else(|| self.model.clone())
+    }
+
+    pub fn project_basename(&self) -> &str {
+        self.project_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("Project")
+    }
+
+    pub fn composer_context_label(&self) -> &str {
+        self.project_basename()
     }
 
     pub fn filtered_models(&self) -> Vec<&ModelOption> {
@@ -220,6 +234,18 @@ impl WorkspaceState {
     }
 
     fn update_chat(&mut self, event: ChatEvent) -> WorkspaceOutcome {
+        match event {
+            ChatEvent::SandboxScopePressed => {
+                self.composer_scope = ComposerScope::Sandbox;
+                return WorkspaceOutcome::SessionChanged;
+            }
+            ChatEvent::FolderScopePressed => {
+                self.composer_scope = ComposerScope::Folder;
+                return WorkspaceOutcome::SessionChanged;
+            }
+            _ => {}
+        }
+
         if matches!(
             event,
             ChatEvent::ApiKeyHintPressed | ChatEvent::ConfigureActionsPressed
@@ -364,6 +390,17 @@ mod tests {
         let outcome = state.update(WorkspaceMessage::CloseProjectConfirm);
         assert_eq!(outcome, WorkspaceOutcome::ProjectClosed);
         assert_eq!(state.overlay, WorkspaceOverlay::None);
+    }
+
+    #[test]
+    fn composer_scope_switches_on_chip_press() {
+        let mut state = sample_state();
+        assert_eq!(state.composer_scope, super::ComposerScope::Sandbox);
+        state.update(WorkspaceMessage::FolderScopePressed);
+        assert_eq!(state.composer_scope, super::ComposerScope::Folder);
+        let outcome = state.update(WorkspaceMessage::SandboxScopePressed);
+        assert_eq!(outcome, WorkspaceOutcome::SessionChanged);
+        assert_eq!(state.composer_scope, super::ComposerScope::Sandbox);
     }
 
     #[test]

@@ -89,6 +89,10 @@ pub enum RadiusToken {
     Lg,
     /// Status chips and sequence markers only.
     Pill,
+    /// Host window corner radius — use for docked panels and large surfaces.
+    Window,
+    /// In-page controls — buttons, chips, compact inputs.
+    Control,
 }
 
 impl RadiusToken {
@@ -99,6 +103,8 @@ impl RadiusToken {
             RadiusToken::Md => 12.0,
             RadiusToken::Lg => 18.0,
             RadiusToken::Pill => 999.0,
+            RadiusToken::Window => crate::shared::design::design_platform::window_corner_radius(),
+            RadiusToken::Control => crate::shared::design::design_platform::control_corner_radius(),
         }
     }
 }

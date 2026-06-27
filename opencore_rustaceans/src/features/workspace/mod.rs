@@ -45,6 +45,7 @@ mod workspace_openrouter_provider;
 mod workspace_outcome;
 mod workspace_overlay;
 mod workspace_persisted_credential_store;
+mod workspace_scope;
 mod workspace_session;
 mod workspace_sse;
 mod workspace_state;

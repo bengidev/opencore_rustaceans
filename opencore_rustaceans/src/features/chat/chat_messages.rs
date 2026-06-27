@@ -7,6 +7,8 @@ pub enum ChatEvent {
     ApiKeyHintPressed,
     ConfigureActionsPressed,
     ModelChipPressed,
+    SandboxScopePressed,
+    FolderScopePressed,
     StreamDelta(String),
     StreamCompleted,
     StreamFailed(String),

@@ -9,15 +9,16 @@ use iced::widget::{
 };
 
 use crate::shared::design::OpenCoreTheme;
+use crate::shared::design::design_radius::control_radius;
 use crate::shared::design::design_tokens::{
     BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
+};
+use crate::shared::design::{
+    chip_button_style, primary_button_style, text_input_style, with_alpha,
 };
 
 use super::workspace_messages::WorkspaceMessage;
 use super::workspace_state::WorkspaceState;
-use crate::features::chat::{
-    chip_button_style, control_radius, primary_button_style, text_input_style,
-};
 
 /// Active overlay on the workspace screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -133,12 +134,12 @@ fn api_key_settings_panel(
     let remove = button(text("Remove").size(TypeRole::LabelMd.size()))
         .on_press(WorkspaceMessage::ApiKeyRemove)
         .padding([SpacingToken::S2.value(), SpacingToken::S4.value()])
-        .style(move |_t: &Theme, status| chip_button_style(theme, status));
+        .style(move |_t: &Theme, status| chip_button_style(theme, status, false));
 
     let done = button(text("Done").size(TypeRole::LabelMd.size()))
         .on_press(WorkspaceMessage::ApiKeyDismiss)
         .padding([SpacingToken::S2.value(), SpacingToken::S4.value()])
-        .style(move |_t: &Theme, status| chip_button_style(theme, status));
+        .style(move |_t: &Theme, status| chip_button_style(theme, status, false));
 
     container(
         column![
@@ -277,7 +278,7 @@ fn close_project_panel(theme: OpenCoreTheme) -> Element<'static, WorkspaceMessag
     let cancel = button(text("Cancel").size(TypeRole::LabelMd.size()))
         .on_press(WorkspaceMessage::CloseProjectCancel)
         .padding([SpacingToken::S2.value(), SpacingToken::S4.value()])
-        .style(move |_t: &Theme, status| chip_button_style(theme, status));
+        .style(move |_t: &Theme, status| chip_button_style(theme, status, false));
 
     let confirm = button(text("Close project").size(TypeRole::LabelMd.size()))
         .on_press(WorkspaceMessage::CloseProjectConfirm)
@@ -309,13 +310,6 @@ fn close_project_panel(theme: OpenCoreTheme) -> Element<'static, WorkspaceMessag
         ..Default::default()
     })
     .into()
-}
-
-fn with_alpha(color: iced::Color, alpha: f32) -> iced::Color {
-    iced::Color {
-        a: alpha.clamp(0.0, 1.0),
-        ..color
-    }
 }
 
 fn scrim_color(theme: OpenCoreTheme) -> iced::Color {
