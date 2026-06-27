@@ -1,17 +1,16 @@
-//! Workspace shell view — header, chat panel, and overlays.
+//! Workspace shell view — chat panel and overlays.
 
 use iced::Element;
 use iced::Length;
 use iced::Padding;
 use iced::Theme;
 use iced::alignment::Vertical;
-use iced::widget::{Space, button, column, container, row, stack, text};
+use iced::widget::{column, container, row, stack, text};
 
 use crate::features::chat::{ChatEvent, DEFAULT_TOKEN_BUDGET, body, composer};
-use crate::shared::design::chip_button_style;
 use crate::shared::design::design_chip::selector_chip;
 use crate::shared::design::design_tokens::{
-    BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
+    BackgroundToken, ForegroundToken, SpacingToken, TypeRole,
 };
 
 use super::workspace_chat::workspace_message_from;
@@ -40,40 +39,8 @@ pub fn view(state: &WorkspaceState) -> Element<'_, WorkspaceMessage> {
     )
     .map(workspace_message_from);
 
-    let header = container(
-        row![
-            text(state.project_basename())
-                .size(TypeRole::LabelMd.size())
-                .style(move |_t: &Theme| text::Style {
-                    color: Some(theme.foreground(ForegroundToken::Secondary)),
-                }),
-            Space::new().width(Length::Fill),
-            button(text("Close Project").size(TypeRole::LabelMd.size()).style(
-                move |_t: &Theme| text::Style {
-                    color: Some(theme.foreground(ForegroundToken::Primary)),
-                }
-            ),)
-            .on_press(WorkspaceMessage::CloseProjectRequested)
-            .padding([SpacingToken::S2.value(), SpacingToken::S3.value()])
-            .style(move |_t: &Theme, status| chip_button_style(theme, status, false)),
-        ]
-        .align_y(Vertical::Center)
-        .width(Length::Fill),
-    )
-    .padding([SpacingToken::S3.value(), HORIZONTAL_PAD])
-    .width(Length::Fill)
-    .style(move |_t: &Theme| container::Style {
-        border: iced::Border {
-            width: 1.0,
-            color: theme.border(BorderToken::Subtle),
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
     let base: Element<'_, WorkspaceMessage> = container(
         column![
-            header,
             container(chat_body)
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -109,15 +76,6 @@ pub fn view(state: &WorkspaceState) -> Element<'_, WorkspaceMessage> {
 fn selector_row(state: &WorkspaceState) -> Element<'_, ChatEvent> {
     row![
         model_chip_control(state),
-        scope_chip(
-            state,
-            ComposerScope::Sandbox,
-            "□",
-            "Sandbox",
-            false,
-            true,
-            ChatEvent::SandboxScopePressed,
-        ),
         scope_chip(
             state,
             ComposerScope::Folder,

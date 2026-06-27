@@ -235,10 +235,6 @@ impl WorkspaceState {
 
     fn update_chat(&mut self, event: ChatEvent) -> WorkspaceOutcome {
         match event {
-            ChatEvent::SandboxScopePressed => {
-                self.composer_scope = ComposerScope::Sandbox;
-                return WorkspaceOutcome::SessionChanged;
-            }
             ChatEvent::FolderScopePressed => {
                 self.composer_scope = ComposerScope::Folder;
                 return WorkspaceOutcome::SessionChanged;
@@ -393,14 +389,9 @@ mod tests {
     }
 
     #[test]
-    fn composer_scope_switches_on_chip_press() {
-        let mut state = sample_state();
-        assert_eq!(state.composer_scope, super::ComposerScope::Sandbox);
-        state.update(WorkspaceMessage::FolderScopePressed);
+    fn composer_scope_defaults_to_folder() {
+        let state = sample_state();
         assert_eq!(state.composer_scope, super::ComposerScope::Folder);
-        let outcome = state.update(WorkspaceMessage::SandboxScopePressed);
-        assert_eq!(outcome, WorkspaceOutcome::SessionChanged);
-        assert_eq!(state.composer_scope, super::ComposerScope::Sandbox);
     }
 
     #[test]

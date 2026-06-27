@@ -97,11 +97,6 @@ fn composer_card(
         .size(TypeRole::BodyMd.size())
         .style(move |_t: &Theme, status: InputStatus| composer_input_style(theme, status));
 
-    let muted = theme.foreground(ForegroundToken::Muted);
-    let attach = upcoming_action_glyph("⌁", muted);
-    let commands = upcoming_action_glyph("/", muted);
-    let voice = upcoming_action_glyph("◌", muted);
-
     let send_hint = text("↵ to send")
         .size(TypeRole::LabelMd.size())
         .style(move |_t: &Theme| text::Style {
@@ -120,9 +115,6 @@ fn composer_card(
     );
 
     let action_bar = row![
-        attach,
-        commands,
-        voice,
         Space::new().width(Length::Fill),
         send_hint,
         send,
@@ -292,15 +284,6 @@ fn icon_button(
     }
 
     control.into()
-}
-
-fn upcoming_action_glyph(label: &'static str, color: iced::Color) -> Element<'static, ChatEvent> {
-    container(centered_glyph(label, color, ICON_BUTTON, ICON_GLYPH_SIZE))
-        .width(Length::Fixed(ICON_BUTTON))
-        .height(Length::Fixed(ICON_BUTTON))
-        .align_x(Horizontal::Center)
-        .align_y(Vertical::Center)
-        .into()
 }
 
 fn composer_can_send(state: &ChatState, has_api_key: bool, models_loading: bool) -> bool {

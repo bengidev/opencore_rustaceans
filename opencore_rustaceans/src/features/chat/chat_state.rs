@@ -90,7 +90,6 @@ impl ChatState {
             ChatEvent::ApiKeyHintPressed
             | ChatEvent::ConfigureActionsPressed
             | ChatEvent::ModelChipPressed
-            | ChatEvent::SandboxScopePressed
             | ChatEvent::FolderScopePressed
             | ChatEvent::Noop => ChatOutcome::None,
         }
