@@ -15,6 +15,8 @@ pub fn chat_event_from(message: &WorkspaceMessage) -> Option<ChatEvent> {
         WorkspaceMessage::StreamDelta(delta) => Some(ChatEvent::StreamDelta(delta.clone())),
         WorkspaceMessage::StreamCompleted => Some(ChatEvent::StreamCompleted),
         WorkspaceMessage::StreamFailed(error) => Some(ChatEvent::StreamFailed(error.clone())),
+        WorkspaceMessage::SandboxScopePressed => Some(ChatEvent::SandboxScopePressed),
+        WorkspaceMessage::FolderScopePressed => Some(ChatEvent::FolderScopePressed),
         WorkspaceMessage::Noop => Some(ChatEvent::Noop),
         _ => None,
     }
@@ -27,6 +29,8 @@ pub fn workspace_message_from(event: ChatEvent) -> WorkspaceMessage {
         ChatEvent::ApiKeyHintPressed => WorkspaceMessage::ApiKeyHintPressed,
         ChatEvent::ConfigureActionsPressed => WorkspaceMessage::ConfigureActionsPressed,
         ChatEvent::ModelChipPressed => WorkspaceMessage::ModelChipPressed,
+        ChatEvent::SandboxScopePressed => WorkspaceMessage::SandboxScopePressed,
+        ChatEvent::FolderScopePressed => WorkspaceMessage::FolderScopePressed,
         ChatEvent::StreamDelta(delta) => WorkspaceMessage::StreamDelta(delta),
         ChatEvent::StreamCompleted => WorkspaceMessage::StreamCompleted,
         ChatEvent::StreamFailed(error) => WorkspaceMessage::StreamFailed(error),

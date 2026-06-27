@@ -18,6 +18,8 @@ pub enum WorkspaceMessage {
     StreamFailed(String),
     ApiKeyPresenceChanged(bool),
     ModelChipPressed,
+    SandboxScopePressed,
+    FolderScopePressed,
     ModelPickerDismiss,
     ModelPickerQueryChanged(String),
     ModelPickerSelect(usize),

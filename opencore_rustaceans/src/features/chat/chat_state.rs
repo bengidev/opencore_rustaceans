@@ -4,6 +4,15 @@ use super::chat_messages::ChatEvent;
 use super::chat_model::ChatThread;
 use super::chat_outcome::ChatOutcome;
 
+/// Default context-window budget when the selected model has no known limit.
+pub const DEFAULT_TOKEN_BUDGET: u32 = 128_000;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TokenEstimate {
+    pub used: u32,
+    pub budget: u32,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ChatState {
     pub thread: ChatThread,
@@ -28,6 +37,25 @@ impl ChatState {
             draft,
             is_streaming: false,
             streaming_message_id: None,
+        }
+    }
+
+    /// Rough token count from thread content and draft (chars / 4).
+    pub fn estimated_tokens(&self) -> u32 {
+        let chars: usize = self
+            .thread
+            .messages()
+            .iter()
+            .map(|message| message.content.len())
+            .sum::<usize>()
+            + self.draft.len();
+        (chars as u32) / 4
+    }
+
+    pub fn token_estimate(&self, budget: u32) -> TokenEstimate {
+        TokenEstimate {
+            used: self.estimated_tokens(),
+            budget,
         }
     }
 
@@ -62,6 +90,8 @@ impl ChatState {
             ChatEvent::ApiKeyHintPressed
             | ChatEvent::ConfigureActionsPressed
             | ChatEvent::ModelChipPressed
+            | ChatEvent::SandboxScopePressed
+            | ChatEvent::FolderScopePressed
             | ChatEvent::Noop => ChatOutcome::None,
         }
     }
@@ -165,5 +195,27 @@ mod tests {
         let state = ChatState::restore(String::from("draft"), thread);
         assert_eq!(state.draft, "draft");
         assert_eq!(state.thread.messages().len(), 1);
+    }
+
+    #[test]
+    fn estimated_tokens_is_zero_when_empty() {
+        let state = ChatState::new();
+        assert_eq!(state.estimated_tokens(), 0);
+    }
+
+    #[test]
+    fn estimated_tokens_counts_thread_and_draft() {
+        let mut state = ChatState::new();
+        state.draft = String::from("abcd");
+        state.thread.push_user(String::from("1234"));
+        assert_eq!(state.estimated_tokens(), 2);
+    }
+
+    #[test]
+    fn token_estimate_carries_budget() {
+        let state = ChatState::new();
+        let estimate = state.token_estimate(128_000);
+        assert_eq!(estimate.used, 0);
+        assert_eq!(estimate.budget, 128_000);
     }
 }

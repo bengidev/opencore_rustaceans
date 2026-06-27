@@ -12,7 +12,9 @@ use iced::widget::canvas::Canvas;
 use iced::widget::text::Wrapping;
 use iced::widget::{MouseArea, Space, Stack, button, column, container, row, text};
 
-use crate::features::chat::{chip_button_style, primary_button_style};
+use crate::shared::design::{
+    chip_button_style, primary_button_style, with_alpha,
+};
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::ThemeMode;
 use crate::shared::design::design_radius::control_radius;
@@ -134,7 +136,7 @@ fn theme_toggle_button(state: &OnboardingState) -> Element<'_, OnboardingMessage
     )
     .padding([6, 10])
     .on_press(OnboardingMessage::ToggleTheme)
-    .style(move |_t: &Theme, status| chip_button_style(theme, status))
+    .style(move |_t: &Theme, status| chip_button_style(theme, status, false))
     .into()
 }
 
@@ -302,7 +304,7 @@ fn action_row(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
     }))
     .padding([14, 18])
     .on_press(OnboardingMessage::Skipped)
-    .style(move |_t: &Theme, status| chip_button_style(theme, status));
+    .style(move |_t: &Theme, status| chip_button_style(theme, status, false));
 
     row![
         Space::new().width(Length::Fill),
@@ -314,11 +316,4 @@ fn action_row(state: &OnboardingState) -> Element<'_, OnboardingMessage> {
     .align_y(Vertical::Center)
     .width(Length::Fill)
     .into()
-}
-
-fn with_alpha(color: iced::Color, alpha: f32) -> iced::Color {
-    iced::Color {
-        a: alpha.clamp(0.0, 1.0),
-        ..color
-    }
 }

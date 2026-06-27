@@ -27,7 +27,7 @@ pub fn window_corner_radius() -> f32 {
     }
     #[cfg(target_os = "linux")]
     {
-        15.0
+        linux_window_corner_radius()
     }
     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
     {
@@ -41,14 +41,35 @@ pub fn control_corner_radius() -> f32 {
     {
         4.0
     }
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    #[cfg(target_os = "macos")]
     {
         6.0
+    }
+    #[cfg(target_os = "linux")]
+    {
+        linux_control_corner_radius()
     }
     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
     {
         6.0
     }
+}
+
+#[cfg(target_os = "linux")]
+fn linux_window_corner_radius() -> f32 {
+    if is_kde_desktop() { 10.0 } else { 15.0 }
+}
+
+#[cfg(target_os = "linux")]
+fn linux_control_corner_radius() -> f32 {
+    if is_kde_desktop() { 5.0 } else { 6.0 }
+}
+
+#[cfg(target_os = "linux")]
+fn is_kde_desktop() -> bool {
+    std::env::var("XDG_CURRENT_DESKTOP")
+        .map(|value| value.to_ascii_lowercase().contains("kde"))
+        .unwrap_or(false)
 }
 
 #[cfg(target_os = "macos")]

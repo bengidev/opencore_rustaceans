@@ -7,6 +7,8 @@
 //! spacing/radius scales, typography roles, and a theme struct that
 //! resolves tokens to concrete values per mode.
 
+pub mod design_chip;
+pub mod design_controls;
 pub mod design_iced_theme;
 pub mod design_palette;
 pub mod design_platform;
@@ -14,6 +16,10 @@ pub mod design_radius;
 pub mod design_theme;
 pub mod design_tokens;
 
+pub use design_chip::{centered_glyph, selector_chip, status_dot};
+pub use design_controls::{
+    chip_button_style, icon_button_style, primary_button_style, text_input_style, with_alpha,
+};
 pub use design_iced_theme::iced_theme;
 pub use design_platform::{control_corner_radius, window_corner_radius};
 pub use design_radius::{control_radius, surface_radius};
