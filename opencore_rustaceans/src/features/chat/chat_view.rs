@@ -6,11 +6,11 @@ use iced::Theme;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{MouseArea, Space, column, container, image, row, scrollable, text};
 
+use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_radius::control_radius;
 use crate::shared::design::design_tokens::{
     BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
 };
-use crate::shared::design::OpenCoreTheme;
 
 use super::chat_brand;
 use super::chat_messages::ChatEvent;

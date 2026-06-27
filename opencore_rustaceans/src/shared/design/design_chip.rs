@@ -6,10 +6,10 @@ use iced::Theme;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{Space, button, container, row, text};
 
+use super::OpenCoreTheme;
 use super::design_controls::chip_button_style;
 use super::design_radius::control_radius;
 use super::design_tokens::{ForegroundToken, SpacingToken, TypeRole};
-use super::OpenCoreTheme;
 
 pub const CHIP_GLYPH_BOX: f32 = 16.0;
 pub const CHIP_GLYPH_SIZE: f32 = 12.0;
@@ -33,10 +33,7 @@ pub fn centered_glyph<M: Clone + 'static>(
     .into()
 }
 
-pub fn status_dot<M: Clone + 'static>(
-    theme: OpenCoreTheme,
-    active: bool,
-) -> Element<'static, M> {
+pub fn status_dot<M: Clone + 'static>(theme: OpenCoreTheme, active: bool) -> Element<'static, M> {
     let color = if active {
         theme.foreground(ForegroundToken::Primary)
     } else {
@@ -69,7 +66,9 @@ pub fn selector_chip<'a, M: Clone + 'static>(
 ) -> Element<'a, M> {
     let icon_color = theme.foreground(ForegroundToken::Muted);
 
-    let mut content = row![].spacing(SpacingToken::S1.value()).align_y(Vertical::Center);
+    let mut content = row![]
+        .spacing(SpacingToken::S1.value())
+        .align_y(Vertical::Center);
 
     if show_status_dot {
         content = content.push(status_dot::<M>(theme, active));

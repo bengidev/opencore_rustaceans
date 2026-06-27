@@ -3,11 +3,9 @@
 use iced::widget::text_input::Status as InputStatus;
 use iced::widget::{button, text_input};
 
-use super::design_radius::control_radius;
-use super::design_tokens::{
-    ActionToken, BackgroundToken, BorderToken, ForegroundToken,
-};
 use super::OpenCoreTheme;
+use super::design_radius::control_radius;
+use super::design_tokens::{ActionToken, BackgroundToken, BorderToken, ForegroundToken};
 
 pub fn with_alpha(color: iced::Color, alpha: f32) -> iced::Color {
     iced::Color {

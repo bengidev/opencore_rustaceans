@@ -8,11 +8,11 @@ use iced::alignment::Vertical;
 use iced::widget::{Space, button, column, container, row, stack, text};
 
 use crate::features::chat::{ChatEvent, DEFAULT_TOKEN_BUDGET, body, composer};
+use crate::shared::design::chip_button_style;
 use crate::shared::design::design_chip::selector_chip;
 use crate::shared::design::design_tokens::{
     BackgroundToken, BorderToken, ForegroundToken, SpacingToken, TypeRole,
 };
-use crate::shared::design::{chip_button_style};
 
 use super::workspace_chat::workspace_message_from;
 use super::workspace_messages::WorkspaceMessage;

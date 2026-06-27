@@ -12,15 +12,13 @@ use iced::widget::canvas::Canvas;
 use iced::widget::text::Wrapping;
 use iced::widget::{MouseArea, Space, Stack, button, column, container, row, text};
 
-use crate::shared::design::{
-    chip_button_style, primary_button_style, with_alpha,
-};
 use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::ThemeMode;
 use crate::shared::design::design_radius::control_radius;
 use crate::shared::design::design_tokens::{
     ActionToken, BackgroundToken, ForegroundToken, SpacingToken, TypeRole,
 };
+use crate::shared::design::{chip_button_style, primary_button_style, with_alpha};
 
 use super::onboarding_feature_card_icon::{FeatureCardIcon, FeatureKind};
 use super::onboarding_galaxy_orb::GalaxyOrbProgram;

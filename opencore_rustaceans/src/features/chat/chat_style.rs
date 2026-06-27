@@ -1,12 +1,12 @@
 //! Chat-specific control styling.
 
-use iced::widget::text_input::Status as InputStatus;
 use iced::widget::text_input;
+use iced::widget::text_input::Status as InputStatus;
 
+use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_controls::with_alpha;
 use crate::shared::design::design_radius::control_radius;
 use crate::shared::design::design_tokens::ForegroundToken;
-use crate::shared::design::OpenCoreTheme;
 
 pub fn composer_input_style(theme: OpenCoreTheme, status: InputStatus) -> text_input::Style {
     let base = text_input::Style {

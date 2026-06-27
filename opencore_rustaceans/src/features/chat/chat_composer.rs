@@ -7,13 +7,13 @@ use iced::alignment::{Horizontal, Vertical};
 use iced::widget::text_input::Status as InputStatus;
 use iced::widget::{MouseArea, Space, button, column, container, row, text, text_input};
 
+use crate::shared::design::OpenCoreTheme;
 use crate::shared::design::design_chip::centered_glyph;
 use crate::shared::design::design_controls::icon_button_style;
 use crate::shared::design::design_radius::{control_radius, surface_radius};
 use crate::shared::design::design_tokens::{
     ActionToken, BackgroundToken, BorderToken, ForegroundToken, RadiusToken, SpacingToken, TypeRole,
 };
-use crate::shared::design::OpenCoreTheme;
 
 use super::chat_messages::ChatEvent;
 use super::chat_state::{ChatState, TokenEstimate};
